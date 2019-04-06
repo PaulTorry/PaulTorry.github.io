@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Space heX</title>
+  <style>
+  body {background-color: #101010}
+  img {display: none}
+  </style>
+  <meta charset="UTF-8" user-scalable=no/>
+  <link rel="stylesheet" href="" type="text/css"/>
+
+  <script src="./src/library.js"></script>
+  <script src="./src/variableSetup.js"></script>
+  <script src="./src/shipLogic.js"></script>
+  <script src="./src/menuLogic.js"></script>
+  <script src="./src/gameLogic.js"></script>
+  <script src="./src/ai.js"></script>
+  <script src="./src/gameInput.js"></script>
+  <script src="./src/consoleLogic.js"></script>
+  <script src="./src/viewLogic.js"></script>
+  <script src="./src/gameSprites.js"></script>
+  <script src="./src/gameOutput.js"></script>
+  <script src="./src/gameSetup.js"></script>
+
+</head>
+<body>
+
+<canvas id="menu" width="800" height="100" style="border:1px solid #d3d3d3;"></canvas>
+<canvas id="board" width="800" height="800" style="border:1px solid #d3d3d3;"></canvas>
+
+</body>
+<script>
+
+document.body.querySelector("#board").addEventListener("click", boardClick) ;
+document.body.querySelector("#board").addEventListener("mousedown", mousedown);
+document.body.querySelector("#board").addEventListener("wheel", mouseWheel);
+document.body.querySelector("#menu").addEventListener("click", menuClick);
+
+document.body.querySelector("#board").addEventListener("touchstart", touchstart);
+document.body.addEventListener("keydown", interactiveConsole);
+
+window.onload = () => {
+  console.log("Hi");
+  translateContext(new Vec(-400,-400));
+  scaleContext(0.6);
+  drawScreen();
+}
+
+drawScreen();
+
+</script>
+
+</html>
