@@ -8,15 +8,15 @@ state, territoryState, shipState, getShipOnHex, data
 /* eslint-disable no-unused-vars */
 
 function makeMenu(hex){
-  console.log("makemenu");
+  // console.log("makemenu");
   let base = state.baseArray.find(b => b.hex.compare(hex));
   let tile = state.tiles.get(hex.id);
   let ship =  getShipOnHex(hex); //shipArray.find(e => e.location.compare(hex));
   // console.log("makeMenu",base, tile, ship, hex.id);
-  return data.thingList.filter(pos => {
+  return data.thingList.filter(pos => {                                        // make a map to include failure point
 
 
-    // console.log("pos ", pos);
+  //  console.log("pos ", pos);
     if(pos.price > state.playerData[state.playerTurn].money) return false;
     // console.log(" price  success");
 
@@ -26,6 +26,8 @@ function makeMenu(hex){
 
     if(pos.territoryState && pos.territoryState > territoryState(hex)) return false;
     // console.log(" territoryState  success");
+
+    if(pos.resource && pos.resource !== tile.resource) return false;
 
     if(pos.base && !state.baseArray.filter(b => {return b.hex.compare(hex) && b.owner === state.playerTurn})[0]) {
       return false;
@@ -58,6 +60,8 @@ function makeMenu(hex){
     if(pos.thingPresent && pos.thingPresent.find(t => t === "navBeacon") && !tile.navBeacon) return false;
     // console.log(" thingPresent  success");
     // Self check
+
+    if(pos.nextTo && !hex.neighbours.filter(x => x.mag < state.boardSize).find((x)=> state.tiles.get(x.id).terrain === pos.nextTo)) return false;
 
     if(pos.thing === "navBeacon"){if (tile.navBeacon && tile.navBeacon.owner === state.playerTurn) return false;}
 

@@ -3,10 +3,15 @@
 <head>
   <title>Space heX</title>
   <style>
+  body, html {height:100%; width:100%;}
+  div.wrap {height:100%; width:100%; overflow:hidden;}
   body {background-color: #101010}
+  body {overflow: hidden; }
   img {display: none}
   </style>
-  <meta charset="UTF-8" user-scalable=no/>
+  <!--meta charset="UTF-8" user-scalable=no/-->
+  <meta name="viewport" content="width=device-width,
+    initial-scale=0.45, maximum-scale=1, user-scalable=0"/>
   <link rel="stylesheet" href="" type="text/css"/>
 
   <script src="./src/library.js"></script>
@@ -24,10 +29,10 @@
 
 </head>
 <body>
-
+<div class=wrap>
 <canvas id="menu" width="800" height="100" style="border:1px solid #d3d3d3;"></canvas>
 <canvas id="board" width="800" height="800" style="border:1px solid #d3d3d3;"></canvas>
-
+</div>
 </body>
 <script>
 
@@ -37,7 +42,9 @@ document.body.querySelector("#board").addEventListener("wheel", mouseWheel);
 document.body.querySelector("#menu").addEventListener("click", menuClick);
 
 document.body.querySelector("#board").addEventListener("touchstart", touchstart);
-document.body.addEventListener("keydown", interactiveConsole);
+document.body.addEventListener("keydown", keyHandle);
+
+//document.body.addEventListener('touchstart', function(e){ e.preventDefault(); });
 
 window.onload = () => {
   console.log("Hi");
@@ -47,6 +54,7 @@ window.onload = () => {
 }
 
 drawScreen();
+
 
 </script>
 

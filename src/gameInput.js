@@ -1,9 +1,9 @@
 "use strict";
 
 /* global
-Vec, Hex, sel:true
+Vec, Hex, sel:true,
 
-boardSize,
+state,
 
 drawScreen, drawMenu, screenSettings, interactiveConsole
 nextTurn,  onMenuItemClicked,  onTechHexClicked, onHexClicked,
@@ -45,14 +45,14 @@ function translateContext (dif, contextName = "board") {
   ctx.translate(-dif.x, -dif.y)
   const newViewCentre = getRealXYfromScreenXY(new Vec(400,400));
 
-  if (newViewCentre.mag >= screenSettings.hexSize*boardSize*1.5+50 && newViewCentre.mag > viewCentre.mag){
+  if (newViewCentre.mag >= screenSettings.hexSize * state.boardSize*1.5+50 && newViewCentre.mag > viewCentre.mag){
     translateContext(dif.scale(-1), contextName);
   }
 }
 
 function translateContextTo(loc, ctx = "board") {
   const c = document.getElementById(ctx).getContext("2d");
-  let dif = loc.subtract(screenSettings.screenOffset).subtract(screenSettings.screenCenter);
+  let dif = loc.subtract(screenSettings.screenOffset).subtract(screenSettings.screenCenter.scale(1/screenSettings.scale));
   screenSettings.screenOffset = screenSettings.screenOffset.add(dif)
   c.translate(-dif.x,-dif.y)
 }
@@ -98,6 +98,9 @@ function menuClick(event){
   if(event.offsetX < 90 && event.offsetY < 100){nextTurn()}
   else if (event.offsetY < 90 && event.offsetX > 710) {
     if(!preturn)screenSettings.openTechTree = !screenSettings.openTechTree;
+  }
+  else if ( event.offsetX > 655 && event.offsetX < 700 && event.offsetY > 5 && event.offsetY < 50 ) {
+    interactiveConsole();
   }
   else if(event.offsetY < 90 && event.offsetY > 10 && !screenSettings.openTechTree){
     console.log(event.offsetX);
@@ -166,6 +169,7 @@ function touchdrag(event){
 }
 
 function keyHandle(e){
-  console.log(e);
+//  console.log(e);
   if(e.code === "Tab") interactiveConsole();
+  if(Number(e.key)) interactiveConsole(Number(e.key));
 }

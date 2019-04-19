@@ -1,13 +1,12 @@
 "use strict"
 
 /*global
-  Hex, getUpdatedViewMask, state, data, boardSize
+  Hex, getUpdatedViewMask, state, data
 */
 
 /* eslint-disable no-unused-vars */
 
 function buildShip(type, owner, hex, moved=true, attacked=true){
-  console.log("building");
   let base = data.shipHulls[type];
   return ({type:base.type, hull:base.hull, shield:base.shield,
     attack: base.attack, retaliate:base.retaliate, maxMove: base.maxMove,
@@ -49,10 +48,10 @@ function findPossibleMoves(center, moveLeft = 2){
     visited[current.loc.id] = current;
 
     newfrontier = current.loc.neighbours
-      .filter(n => n.mag <= boardSize)
+      .filter(n => n.mag <= state.boardSize)
       .map(n => {return{loc:n, cost:current.cost - terrainFunc(current.loc.id, n.id), from:current.loc}})
       .filter(({loc:hex, cost, from} ) => {
-        return hex.mag <= boardSize && !(visited[hex.id] && cost < visited[hex.id].cost) && cost >= 0
+        return hex.mag <= state.boardSize && !(visited[hex.id] && cost < visited[hex.id].cost) && cost >= 0
       })
       .concat(newfrontier)
       .sort((a,b) => a.cost - b.cost)
@@ -62,13 +61,28 @@ function findPossibleMoves(center, moveLeft = 2){
 
   let temp =  findPossibleMovesFunctional([{loc:center, cost:moveLeft, from:new Hex()}], //{}
     center.neighbours
-      .filter(n => n.mag <= boardSize && terrainFunc(center.id, n.id) < 20)
+      .filter(n => n.mag <= state.boardSize && terrainFunc(center.id, n.id) < 20)
       .map(n => {return{loc:n, cost:0, from:center}})
       .reduce((acc, c) => {acc[c.loc.id] = c; return acc}, {})
     ,terrainFunc
   );
-  return Object.values(temp).map(v => v.loc).filter(hex => {
-    return  (hex.mag <= boardSize) && !getShipOnHex(hex)
+
+  let temp2 = Object.values(temp).map(v => {
+    let history = []
+    let ff = v.loc
+    for(let i = 10; i > 0; i--) {
+      let f = Object.values(temp).find(vv => ff.compare(vv.loc))
+      if (f && f.from && !f.from.compare(new Hex())){
+        history.push(f.from)
+        ff =  f.from;
+      }
+      else break;
+    }
+    return [v.loc, ...history]
+  })
+
+  return temp2.filter(h => {
+    return  (h[0].mag <= state.boardSize) && !getShipOnHex(h[0])
   });
 }
 
@@ -88,11 +102,10 @@ function makeTerrainCostMap(){
 
     let moveOff = data.terrainInfo[tile.terrain].moveCost / 2;
     let moveOn = data.terrainInfo[tile.terrain].moveCost / 2;
-    if(tile.navBeacon){moveOff = 0.25, moveOn = 0.25}
+    if(tile.navBeacon && state.alliesGrid[tile.navBeacon.owner][state.playerTurn]){moveOff = 0.25, moveOn = 0.25}
 
     for(let hex2 of tile.hex.neighbours){
       let ship = getShipOnHex(hex2)
-      //  if(ship && (ship.owner !== state.playerTurn)) { moveOff = 9; }
       if(ship && (!state.alliesGrid[ship.owner][state.playerTurn])) { moveOff = 9; }
     }
 

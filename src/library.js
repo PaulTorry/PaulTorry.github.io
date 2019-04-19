@@ -46,6 +46,8 @@ class Hex{
   get secondNeighbours() {return Hex.secondNeighbours().map(n => n.add(this))}
   get thirdNeighbours() {return Hex.thirdNeighbours().map(n => n.add(this))}
 
+  get randomNeighbour(){return this.neighbours[randomInt(6)]}
+
   get secondNeighboursInclusive() {return this.neighbours.concat(this.secondNeighbours)}
   get thirdNeighboursInclusive() {return this.secondNeighboursInclusive.concat(this.thirdNeighbours)}
 
@@ -73,6 +75,29 @@ class Hex{
       }
     }
     return list;
+  }
+
+  static arrayToID(l){
+    let [a,b] = l;
+    return `${a},${b}`
+  }
+
+  static getRandomPicker(n){
+    let list = []
+    for(let i = -n; i<=n; i++){
+      list.push ([i, Math.max(-n, -n-i), Math.min(n, n-i) - Math.max(-n, -n-i) + 1])
+    }
+    let total = list.reduce((a,c)=>a+c[2],0);
+    return (r)=>Hex.getNfromWeightedList(Math.floor(r*(total)), list)
+  }
+
+  static getNfromWeightedList(n, list){
+    let left = n;
+    let [head, ...tail] = list;
+    if (left < head[2]){
+      return [head[0], head[1] + left]
+    }
+    return Hex.getNfromWeightedList(n - head[2], tail);
   }
 
   static neighbours() {return [new Hex(1,0), new Hex(0,-1), new Hex(-1,0), new Hex(-1,1), new Hex(0,1), new Hex(1,-1)]}
@@ -103,20 +128,6 @@ class Hex{
     new Hex(0,3), new Hex(0,-3)
   ]}
 
-  // static between (x,y) {
-  //   let z = x.subtract(y)
-  //   if (z.p % 2 === 0 && z.q % 2 === 0){
-  //     return [new Hex(z.p/2 + y.p,z.p/2 + y.p)];
-  //   }
-  //   if (z.p % 2 !== 0 && z.q % 2 === 0){
-  //     return [new Hex((z.p+1)/2 + y.p),new Hex(z.p/2 + y.p)];
-  //   }
-  //   if (z.p % 2 === 0 && z.q % 2 === 0){
-  //     return [new Hex(z.p/2 + y.p)];
-  //   }
-  //
-  // }
-
   static getXYfromUnitHex(hexCoord){
     const hexVec = {p: new Vec(1,0),   q: new Vec((-1/2), Math.sqrt(3)/2),  r: new Vec((-1/2), -Math.sqrt(3)/2) }
     return hexVec.p.scale(hexCoord.p).add(hexVec.q.scale(hexCoord.q))
@@ -124,9 +135,8 @@ class Hex{
   }
 
   static getUnitHexFromXY(xy){
-    const invHexVec = {p: new Vec(2/(3),0),   q: new Vec((-2/6), Math.sqrt(3)/3),  r: new Vec((-2/6), -Math.sqrt(3)/3) }
-    let {p, q, r} = invHexVec;
-    //let xy = xyScaled.scale(1/hexSize);
+    const {p, q, r} = {p: new Vec(2/(3),0),   q: new Vec((-2/6), Math.sqrt(3)/3),  r: new Vec((-2/6), -Math.sqrt(3)/3) }
+    //let {p, q, r} = invHexVec;
     return Hex.hex_round(new Hex(xy.dot(p), xy.dot(q),xy.dot(r)))
   }
 
@@ -139,10 +149,9 @@ class Hex{
     let p_diff = Math.abs(pi - h.p);
     if (q_diff > r_diff && q_diff > p_diff)    {           qi = -ri - pi;    }
     else  if (r_diff > p_diff)                 {           ri = -qi - pi;        }
-    else                                    {            pi = -qi - ri;        }
+    else                                       {           pi = -qi - ri;        }
     return new Hex(pi, qi, ri);
   }
-
 }
 
 function randomInt(num) {return Math.floor(Math.random() * num);}
@@ -160,10 +169,5 @@ var clone = function() {
   }
   return newObj;
 };
-
-//Hex.getDependants(new Hex(), new Hex())
-
-//console.log(Hex.secondNeighbours ());
-// console.log(Hex.getDependants(new Hex(3,1), new Hex(2,0)));
 
 Object.defineProperty( Object.prototype, "clone", {value: clone, enumerable: false});

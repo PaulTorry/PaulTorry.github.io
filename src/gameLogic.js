@@ -3,14 +3,16 @@
 /*global
 drawScreen, sel:true, screenSettings,
 nextTurn,
-state, boardSize,
+state,
 onMenuItemClicked,
 preturn:true, makeMenu,
 findPossibleAttacks, getShipOnHex, findPossibleMoves,
 buildShip,
 translateContextTo, getXYfromHex, drawMenu, getUpdatedViewMask
 data
-takeAIturn
+takeAIturn,
+subTurn,
+autoSave
 */
 
 // techs,
@@ -30,7 +32,8 @@ function onHexClicked(clickHex){
 
     if(sel.state === 2){
       if (clickHex.compare(sel.hex)) sel = {state:0,  moves:[], attacks:[], menu: []};
-      else sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeMenu(clickHex)};
+      else sel = {state:0,  moves:[], attacks:[], menu: []};
+    //  else sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeMenu(clickHex)};
     }
 
     else if (sel.state === 1){
@@ -38,8 +41,9 @@ function onHexClicked(clickHex){
         sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeMenu(clickHex)};
       }
 
-      else if(sel.moves.find( e =>  e.compare(clickHex))) {
+      else if(sel.moves.find( e =>  e[0].compare(clickHex))) {
         sel.ship.hex = clickHex;
+        state.history[subTurn()].push({type:"move" , rand:Math.random(), path:sel.moves.find( e =>  e[0].compare(clickHex))})
         sel.ship.moved = true;
         sel.hex = clickHex;
 
@@ -49,7 +53,8 @@ function onHexClicked(clickHex){
         if (possibleAttacks.length > 0) { sel.moves = []; sel.attacks = possibleAttacks}
         else{
           sel.ship.attacked = true;
-          sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeMenu(clickHex)};
+          sel = {state:0, moves:[], attacks:[], menu:[]}
+        //  sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeMenu(clickHex)};
         }
         sel.menu = [];
       }
@@ -58,6 +63,7 @@ function onHexClicked(clickHex){
         let target = getShipOnHex(clickHex);
         if(target){
           applyDamage(sel.ship, target, true, getTerrainDefVal(target, clickHex));
+          state.history[subTurn()].push({type:"attack" , rand:Math.random(), path:[clickHex, sel.ship.hex]})
           sel.ship.moved = true; sel.ship.attacked = true;
         }
         else { console.log("error in attacks"); }
@@ -104,13 +110,15 @@ function onMenuItemClicked(item, hex = sel.hex){
   let tile = state.tiles.get(hex.id);
   let ship = getShipOnHex(hex);
   let thing = data.thingList.find(t => t.thing === item);
-  if (sel.state !== 2) console.log("sel.state !== 2");
+  // if (sel.state !== 2) console.log("sel.state !== 2");
 
   state.playerData[state.playerTurn].money -= thing.price;
 
   if(thing.type && thing.type === "industry"){
     tile.station = {type: item, owner: state.playerTurn}
   }
+
+  if(thing.type && thing.type === "resource"){  tile.resource = null;  }
 
   if(thing.type && thing.type === "ship"){
     state.shipArray.push(buildShip(item, state.playerTurn, tile.hex))
@@ -121,46 +129,31 @@ function onMenuItemClicked(item, hex = sel.hex){
     tile.navBeacon = {owner: state.playerTurn}
   }
 
-  // if(item === "harvestGasGiant"){
-  //   tile.station = {type: "harvestGasGiant", owner: state.playerTurn}
-  // }
-  //
-  // if(item === "harvestProtostar"){
-  //   tile.station = {type: "harvestProtostar", owner: state.playerTurn}
-  // }
-
   if(item === "inhabitedPlanet"){
     ship.moved = true; ship.attacked = true;
     let existingBase = state.baseArray.find(b => b.hex.compare(tile.hex));
+    tile.navBeacon = {owner: state.playerTurn}
     if (existingBase){
       existingBase.owner = state.playerTurn;
       existingBase.territory.forEach(t => {
-        console.log(t);
-        if(state.tiles.get(t.id).station){state.tiles.get(t.id).station = {type: "asteroidMining", owner: state.playerTurn}}
+        let station = state.tiles.get(t.id).station
+        //      console.log(t);
+        if(station) station = {type: station.type, owner: state.playerTurn}
       })
     }
     else {state.baseArray.push(
       {type:"planet", owner:state.playerTurn, hex: tile.hex,
-        territory:tile.hex.neighbours.filter(t => territoryState(t) === 1 && t.mag <= boardSize)}
+        territory:tile.hex.neighbours.filter(t => territoryState(t) === 1 && t.mag <= state.boardSize)}
     )}
   }
-
 
 
   if(item === "destroy"){
     tile.navBeacon = null;
   }
 
-  // console.log("gamelogic in shiphulls", item, data.shipHulls)
-  // let inhulle = data.shipHulls[item];
-  // //console.log(inhulle);
-  // if(data.shipHulls[item]){state.shipArray.push(buildShip(item, state.playerTurn, tile.hex))}
-
-
-
-
-
   sel = {state:0, attacks:[], menu:[], moves:[]}
+  reSetIncomes();
   drawMenu();
 }
 
@@ -181,15 +174,12 @@ function getTerrainDefVal(ship, hex){
 
   if(data.terrainInfo[state.tiles.get(hex.id).terrain].defenceTech &&
    state.playerData[ship.owner].tech[data.terrainInfo[state.tiles.get(hex.id).terrain].defenceTech]) {
-    console.log(ship, hex, "def1");
     return 1;
   }
 
   if(state.baseArray.find(b => b.hex.id === hex.id && b.owner === ship.owner)){
-    console.log(ship, hex, "def1 base");
     return 1;
   }
-  console.log(ship, hex, "def0");
   return 0;
 }
 
@@ -236,7 +226,6 @@ function applyDamage(attacker, ship, attacking = true, terrainDefence = 0){
 function getWeaponPower(ship, attacking = true){
   let {type, hull} = ship;
   let  {attack, retaliate} = data.shipHulls[type];
-  console.log(type, hull, attack, retaliate);
 
   if(attacking){ return attack * hull / data.shipHulls[type].hull; }
   else{ return retaliate * hull / data.shipHulls[type].hull; }
@@ -245,7 +234,9 @@ function getWeaponPower(ship, attacking = true){
 
 
 function nextTurn(){
-  state.playerData[state.playerTurn].money += collectMoney();
+  if (state.playerData[state.playerTurn].type === "human") autoSave();
+
+  state.playerData[state.playerTurn].money += state.playerData[state.playerTurn].income;
 
   for (let ship of state.shipArray){
     if (ship.owner === state.playerTurn){
@@ -255,6 +246,10 @@ function nextTurn(){
     }
   }
   state.playerTurn = (state.playerTurn + 1) % state.numPlayers;
+  if (state.playerTurn === 0) {
+    state.turnNumber += 1;
+  }
+  state.history.push([]);
   translateContextTo(getXYfromHex(state.playerData[state.playerTurn].capital));
   screenSettings.openTechTree = false;
   drawMenu(); drawScreen();
@@ -269,9 +264,15 @@ function nextTurn(){
   }
 }
 
-function collectMoney(){
-  let bases = state.baseArray.filter(b => b.owner === state.playerTurn);
-  let stations = Array.from(state.tiles).filter(([id, val]) => val.station && val.station.owner === state.playerTurn)
+function reSetIncomes(){
+  state.playerData.forEach((v,i) => {
+    state.playerData[i].income = calcIncome(i);
+  })
+}
+
+function calcIncome(player){
+  let bases = state.baseArray.filter(b => b.owner === player);
+  let stations = Array.from(state.tiles).filter(([id, val]) => val.station && val.station.owner === player)
 
   return bases.length + stations.length;
 }

@@ -1,6 +1,6 @@
 "use strict"
 
-/*global  boardSize , Hex, data  */
+/*global,  state , Hex, data  */
 
 /* eslint-disable no-unused-vars */
 
@@ -52,7 +52,7 @@ function getOwnViewMask(state, player = state.playerTurn){
 
   let checkBetween = (x) => {
     return (y) => {
-      if ( Hex.getDependants(x,y).filter(h => h.mag <= boardSize)
+      if ( Hex.getDependants(x,y).filter(h => h.mag <= state.boardSize)
         .find(x => state.tiles.get(x.id).terrain !== "nebula") ) return true;
       else { return false; }
     };
@@ -61,9 +61,9 @@ function getOwnViewMask(state, player = state.playerTurn){
   state.shipArray.forEach(s => {
     if(s.owner === player){
       mask[s.hex.id] = 2;
-      s.hex.neighbours.filter(h => h.mag <= boardSize).forEach(viewHex)
+      s.hex.neighbours.filter(h => h.mag <= state.boardSize).forEach(viewHex)
       if(data.shipHulls[s.type].view>1){
-        s.hex.secondNeighbours.filter(h => h.mag <= boardSize)
+        s.hex.secondNeighbours.filter(h => h.mag <= state.boardSize)
           .filter(checkBetween(s.hex))
           .forEach(viewHex)
       }
