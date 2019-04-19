@@ -78,7 +78,7 @@ function autoSave(){
 
 function saveAs(savename = "quicksave"){
   if (savename === "") savename = "autoSave";
-  let savenames = JSON.parse(localStorage.getItem("#savenames"));
+  let savenames = JSON.parse(localStorage.getItem("#savenames")) || [];
   if (!savenames.length) savenames = [];
   let savestate = state.clone();
   savestate.tiles = [...state.tiles]
