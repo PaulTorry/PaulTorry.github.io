@@ -42,7 +42,7 @@ function interactiveConsole (num = ""){
     saveAs(prompt("Type Save Name", state.gameName))
   }
   if(ans === "2"){
-    load(prompt("Type Save Name: (or \'a\' for autoSave or \'clear\')\n" + saveNames()))
+    load(prompt("Type Save Name: (or 'a' for autoSave or 'clear')\n" + saveNames()))
   }
   if(ans === "3"){
     state.playerData[state.playerTurn].money = 99;
@@ -78,7 +78,7 @@ function autoSave(){
 
 function saveAs(savename = "quicksave"){
   if (savename === "") savename = "autoSave";
-  let savenames = JSON.parse(localStorage.getItem("#savenames")|| "[]");
+  let savenames = JSON.parse(localStorage.getItem("#savenames")) || [];
   if (!savenames.length) savenames = [];
   let savestate = state.clone();
   savestate.tiles = [...state.tiles]

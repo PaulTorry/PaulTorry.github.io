@@ -80,7 +80,7 @@ const data = {
     {name: 'Hydrogen. Collection', thing: 'hydrogen', type:"resource", price: -2, territoryState: 2,  shipState: 'noEnemy', tech: 'harvestHydrogen',  terrain: ['nebula', ] , resource:"hydrogen", sprite:[['nebula',1,-2,0.75],['hydrogen',0,0,1]] } ,
 
 
-    {name: 'Conquer Planet', thing: 'inhabitedPlanet', price: 0,   shipState: 'ownPresent',   terrain: ['planet', ], sprite:[['planet',0,0,0.75],['planetRing',0,0,0.75]] } ,
+    {name: 'Conquer Planet', thing: 'inhabitedPlanet', price: 0,   shipState: 'ownPresentUnmoved',   terrain: ['planet', ], sprite:[['planet',0,0,0.75],['planetRing',0,0,0.75]] } ,
 
     {name: ' Scout Ship', thing: 'scoutShip', type:"ship", price: 2, territoryState: 2, inhabitedPlanet: true, shipState: 'noShip', tech: 'scoutShipTech',  terrain: [], sprite:[['scoutShip',0,0,1]] } ,
     {name: 'Basic Frigate', thing: 'basicFrigate', type:"ship", price: 2, territoryState: 2, inhabitedPlanet: true, shipState: 'noShip',   terrain: [], sprite:[['basicFrigate',0,0,1]] } ,

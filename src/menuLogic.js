@@ -43,7 +43,7 @@ function makeMenu(hex){
     if(pos.shipState === "ownPresent" && (!ship || ship.owner !== state.playerTurn)) return false;
     // console.log(" ownPresent  success");
 
-    if(pos.shipState === " ownPresentUnmoved"  && (!ship || ship.owner !== state.playerTurn || ship.moved === true)){
+    if(pos.shipState === "ownPresentUnmoved"  && (!ship || ship.owner !== state.playerTurn || ship.moved === true)){
       return false;
     }
     // console.log(" ownPresentUnmoved  success");

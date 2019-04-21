@@ -185,19 +185,26 @@ function getTerrainDefVal(ship, hex){
 
 function getTerrainDamage(ship, hex){
 //  console.log(ship, hex, state.tiles.get(hex.id));
-  if (data.terrainInfo[state.tiles.get(hex.id).terrain].damTech && !state.tiles.get(hex.id).navBeacon){
 
-    if (!state.playerData[ship.owner].tech[data.terrainInfo[state.tiles.get(hex.id).terrain].damTech]
-      || data.shipHulls[ship.type].maxMove < 2){
-      return 1
+  if (data.terrainInfo[state.tiles.get(hex.id).terrain].damTech && !state.tiles.get(hex.id).navBeacon){
+    let hasTech = state.playerData[ship.owner].tech[data.terrainInfo[state.tiles.get(hex.id).terrain].damTech];
+    if (!hasTech || data.shipHulls[ship.type].maxMove < 2){
+      return [1,hasTech]
     }
   }
-  return 0;
+  return [0,false];
 }
 
-function applyTerrainDamage(ship, damage){
-  ship.hull -= damage;
-  if(ship.hull <= 0) state.shipArray = state.shipArray.filter(e => e !== ship)
+function applyTerrainDamage(ship, damType){
+  let [damage, applyToShield] = damType;
+  let shipKilled
+  if(applyToShield){
+    shipKilled = applyDamageToShieldAndHull(ship, damage)
+  } else {
+    ship.hull -= damage;
+    if(ship.hull <= 0) shipKilled = true;
+  }
+  if(shipKilled) state.shipArray = state.shipArray.filter(e => e !== ship)
 }
 
 function applyDamage(attacker, ship, attacking = true, terrainDefence = 0){
@@ -207,20 +214,44 @@ function applyDamage(attacker, ship, attacking = true, terrainDefence = 0){
   let range = attacker.hex.distance(ship.hex);
   if ( attacker.range < range ){ dammage = 0}
 
+  let shipKilled = applyDamageToShieldAndHull(ship, dammage)
+
+  if(shipKilled){
+    if (range === 1 && attacking){attacker.hex = ship.hex}
+    state.shipArray = state.shipArray.filter(e => e !== ship)
+  } else {
+    if(attacking) applyDamage(ship, attacker, false);
+  }
+
+  //
+  // if (shield >= dammage){
+  //   ship.shield -= dammage;
+  //   if(attacking) applyDamage(ship, attacker, false);
+  // }
+  // else if (shield + hull > dammage) {
+  //   ship.hull -= dammage - shield; ship.shield = 0;
+  //   if(attacking) applyDamage(ship, attacker, false);
+  // }
+  // else {
+  //   if (range === 1 && attacking){attacker.hex = ship.hex}
+  //   state.shipArray = state.shipArray.filter(e => e !== ship)
+  // }
+
+}
+
+
+function applyDamageToShieldAndHull(ship, dammage){
+  let {type, hull, shield} = ship;
   if (shield >= dammage){
     ship.shield -= dammage;
-    if(attacking) applyDamage(ship, attacker, false);
+    return false;
   }
   else if (shield + hull > dammage) {
     ship.hull -= dammage - shield; ship.shield = 0;
-    if(attacking) applyDamage(ship, attacker, false);
+    return false;
   }
-  else {
-    if (range === 1 && attacking){attacker.hex = ship.hex}
-    state.shipArray = state.shipArray.filter(e => e !== ship)
-  }
+  else {    return true;  }
 }
-
 
 
 function getWeaponPower(ship, attacking = true){
