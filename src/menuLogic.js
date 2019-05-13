@@ -64,6 +64,10 @@ function makeMenu(hex){
     if(pos.nextTo && !hex.neighbours.filter(x => x.mag < state.boardSize).find((x)=> state.tiles.get(x.id).terrain === pos.nextTo)) return false;
 
     if(pos.thing === "navBeacon"){if (tile.navBeacon && tile.navBeacon.owner === state.playerTurn) return false;}
+    if(pos.thing === "navAsteroid"){if (tile.navBeacon && tile.navBeacon.owner === state.playerTurn) return false;}
+    if(pos.thing === "navNebula"){if (tile.navBeacon && tile.navBeacon.owner === state.playerTurn) return false;}
+
+
 
     if(pos.type === "industry" && tile.station) return false;
 

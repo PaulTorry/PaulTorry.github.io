@@ -1,6 +1,6 @@
 "use strict"
 
-/* global Hex, Map, Vec, makeNewViewMask     */
+/* global Hex, Map, Vec, makeNewViewMask, randomName     */
 /* eslint-disable no-unused-vars */
 
 
@@ -44,9 +44,9 @@ function setup(numPlayers, boardSize = 8, numHumans = numPlayers, playersTogethe
 
 
 
-  let blackHoleLoc = tiles.get(Hex.arrayToID(randomPicker(0.5)));
-  blackHoleLoc.terrain = "blackHole";
-  blackHoleLoc.resource = null;
+  // let blackHoleLoc = tiles.get(Hex.arrayToID(randomPicker(0.5)));
+  // blackHoleLoc.terrain = "blackHole";
+  // blackHoleLoc.resource = null;
   // console.log(tiles.get(Hex.arrayToID(randomPicker(0.5))).terrain);
 
   let playerlist = []
@@ -100,11 +100,19 @@ function setup(numPlayers, boardSize = 8, numHumans = numPlayers, playersTogethe
       }
     }
   }
+
+  let blackHoleLoc = tiles.get(Hex.arrayToID(randomPicker(0.5)));
+  blackHoleLoc.terrain = "blackHole";
+  blackHoleLoc.resource = null;
+  blackHoleLoc.hex.neighbours.forEach(s => {
+    tiles.get(s.id).terrain  = "space";
+    tiles.get(s.id).resource  = null;
+  })
   // for (let i = 0; i < 100; i++){
   //
   // }
 
-  return {gameName:randomName(), boardSize:boardSize, numPlayers:numPlayers, playerTurn:0, turnNumber:1, shipArray:shipArray, tiles:tiles, playerData:playerData, baseArray:baseArray, alliesGrid:alliesGrid, history:[[],[]]}
+  return {gameName:randomName(), boardSize:boardSize, numPlayers:numPlayers, playerTurn:0, turnNumber:1, shipArray:shipArray, tiles:tiles, playerData:playerData, baseArray:baseArray, alliesGrid:alliesGrid, history:[[],[]], log:[]}
 }
 
 function subTurn(){

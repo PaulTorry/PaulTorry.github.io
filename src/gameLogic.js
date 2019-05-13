@@ -138,7 +138,7 @@ function onMenuItemClicked(item, hex = sel.hex){
       existingBase.territory.forEach(t => {
         let station = state.tiles.get(t.id).station
         //      console.log(t);
-        if(station) station = {type: station.type, owner: state.playerTurn}
+        if(station) state.tiles.get(t.id).station  = {type: station.type, owner: state.playerTurn}
       })
     }
     else {state.baseArray.push(
@@ -154,6 +154,7 @@ function onMenuItemClicked(item, hex = sel.hex){
 
   sel = {state:0, attacks:[], menu:[], moves:[]}
   reSetIncomes();
+  drawScreen();
   drawMenu();
 }
 
@@ -177,7 +178,7 @@ function getTerrainDefVal(ship, hex){
     return 1;
   }
 
-  if(state.baseArray.find(b => b.hex.id === hex.id && b.owner === ship.owner)){
+  if(state.baseArray.find(b => b.hex.compare(hex) && b.owner === ship.owner)){ //hex compare
     return 1;
   }
   return 0;
@@ -262,7 +263,19 @@ function getWeaponPower(ship, attacking = true){
   else{ return retaliate * hull / data.shipHulls[type].hull; }
 }
 
+function repair(ship){
+  let hex = ship.hex;
+  let tState = territoryState(hex);
+  console.log("repair ship", hex, territoryState(hex));
+  if(tState > 1) {
+    if (state.baseArray.find(b => b.hex.compare(hex))) ship.hull = Math.min(ship.hull +2, data.shipHulls[ship.type].hull);
 
+
+    ship.shield =  Math.min(ship.shield +2, data.shipHulls[ship.type].shield)
+  }
+  else if(tState > 1)  ship.shield =  Math.min(ship.shield +1, data.shipHulls[ship.type].shield)
+
+}
 
 function nextTurn(){
   if (state.playerData[state.playerTurn].type === "human") autoSave();
@@ -271,7 +284,7 @@ function nextTurn(){
 
   for (let ship of state.shipArray){
     if (ship.owner === state.playerTurn){
-      if (!ship.moved && !ship.attacked) ship.shield =  Math.min(ship.shield +1, data.shipHulls[ship.type].shield);
+      if (!ship.moved && !ship.attacked) repair(ship)
       ship.moved = false;
       ship.attacked = false;
     }
@@ -284,6 +297,8 @@ function nextTurn(){
   translateContextTo(getXYfromHex(state.playerData[state.playerTurn].capital));
   screenSettings.openTechTree = false;
   drawMenu(); drawScreen();
+
+  state.log.push(`newturn: turn${state.turnNumber}, player ${state.playerTurn}`)
 
   sel = {state:0, attacks:[], menu:[], moves:[]}
   drawMenu(); drawScreen();

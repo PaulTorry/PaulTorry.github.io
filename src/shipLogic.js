@@ -30,7 +30,7 @@ function findPossibleAttacks(center, range = 1){
   let possibleAttacksInt = [];
   for(let hex of center.within(range)){
     let ship = getShipOnHex(hex);
-    if(viewMask[hex.id] === 2 && ship && ship.owner !== state.playerTurn) {
+    if(viewMask[hex.id] === 2 && ship &&  !state.alliesGrid[ship.owner][state.playerTurn]) {
       possibleAttacksInt.push(hex);
     }
   }

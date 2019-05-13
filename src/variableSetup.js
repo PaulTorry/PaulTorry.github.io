@@ -67,6 +67,7 @@ const data = {
     {name: 'Nav. Beacon', thing: 'navBeacon', type:"nav", price: 2, territoryState: 1,  shipState: 'ownPresent', tech: 'navBeacon',  terrain: ['space', ], sprite:[['navBeaconCross',-15,-18,1]] } ,
     {name: 'Nav. Beacon', thing: 'navAsteroid', type:"nav", price: 2, territoryState: 1,  shipState: 'ownPresent', tech: 'navAsteroid',  terrain: ['asteroids', ], sprite:[['asteroids',0,-2,0.75],['navBeaconCross',-15,-18,1]] } ,
     {name: 'Nav. Beacon', thing: 'navNebula',  type:"nav", price: 2, territoryState: 1,  shipState: 'ownPresent', tech: 'navNebula',  terrain: [ 'nebula', ], sprite:[['nebula',1,-2,0.75],['navBeaconCross',-15,-18,1]] } ,
+    {name: 'Nav. Beacon', thing: 'navProto',  type:"nav", price: 2, territoryState: 1,  shipState: 'ownPresent', tech: 'navNebula',  terrain: [ 'protostar', ], sprite:[['nebula',1,-2,0.75],['navBeaconCross',-15,-18,1]] } ,
 
 
     {name: 'Ast. Mining', thing: 'asteroidMining', type:"industry", price: 2, income: 2, territoryState: 2,  shipState: 'noEnemy', tech: 'asteroidMining',  terrain: ['asteroids', ], sprite:[['asteroids',0,-2,0.75],['asteroidMining',0,-2,0.75]] } ,
