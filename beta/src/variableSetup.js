@@ -5,6 +5,47 @@
 
 const data = {
 
+  mainMenu : [
+    {name:'Quick Setup', colour:[50,47,73], hex:new Hex(-3,0), sprite:[['titanShip',0,-10,1]] },
+    {name:'Login/Signup', colour:[50,47,73], hex:new Hex(0, -2), sprite:[['titanShip',0,-10,1]] },
+    {name:'Setup', colour:[50,47,73], hex:new Hex(-3,2), sprite:[['titanShip',0,-10,1]] },
+    {name:'Load', colour:[50,47,73], hex:new Hex(0,0), sprite:[['titanShip',0,-10,1]] },
+
+  ],
+
+  newGameMenu : [
+    {name:'Online', colour:[50,47,73], hex:new Hex(-5,-2), sprite:[['titanShip',0,-10,1]] },
+    {name:'GameName', colour:[50,47,73], hex:new Hex(-3,-3), sprite:[['titanShip',0,-10,1]] },
+    {name:'BoardSize', colour:[50,47,73], hex:new Hex(-1,-4), sprite:[['titanShip',0,-10,1]] },
+    {name:'Make', colour:[150,147,173], hex:new Hex(1,-5), sprite:[['titanShip',0,-10,1]] },
+    {name:'Refresh Friends', colour:[150,147,173], hex:new Hex(4,-6), sprite:[['titanShip',0,-10,1]] },
+
+    {name:'PlayerType', num: 0, colour:[150,147,173], hex:new Hex(-4,-1), sprite:[['titanShip',0,-10,1]] },
+    {name:'PlayerType', num: 1, colour:[150,147,173], hex:new Hex(-3,0), sprite:[['titanShip',0,-10,1]] },
+    {name:'PlayerType', num: 2, colour:[150,147,173], hex:new Hex(-4,2), sprite:[['titanShip',0,-10,1]] },
+    {name:'PlayerType', num: 3, colour:[150,147,173], hex:new Hex(-3,3), sprite:[['titanShip',0,-10,1]] },
+    {name:'PlayerType', num: 4, colour:[150,147,173], hex:new Hex(-4,5), sprite:[['titanShip',0,-10,1]] },
+    {name:'PlayerType', num: 5, colour:[150,147,173], hex:new Hex(-3,6), sprite:[['titanShip',0,-10,1]] },
+
+    {name:'Alliance', num: 0, colour:[150,147,173], hex:new Hex(-2,-2), sprite:[['titanShip',0,-10,1]] },
+    {name:'Alliance', num: 1, colour:[150,147,173], hex:new Hex(-1,-1), sprite:[['titanShip',0,-10,1]] },
+    {name:'Alliance', num: 2, colour:[150,147,173], hex:new Hex(-2,1), sprite:[['titanShip',0,-10,1]] },
+    {name:'Alliance', num: 3, colour:[150,147,173], hex:new Hex(-1,2), sprite:[['titanShip',0,-10,1]] },
+    {name:'Alliance', num: 4, colour:[150,147,173], hex:new Hex(-2,4), sprite:[['titanShip',0,-10,1]] },
+    {name:'Alliance', num: 5, colour:[150,147,173], hex:new Hex(-1,5), sprite:[['titanShip',0,-10,1]] },
+  ],
+
+  loadGameMenu : [
+    {name:'Refresh', colour:[50,47,73], hex:new Hex(4,-6), sprite:[['titanShip',0,-10,1]] },
+    {name:'Online', colour:[50,47,73], hex:new Hex(2,-4), sprite:[['titanShip',0,-10,1]] },
+    {name:'Page', colour:[50,47,73], hex:new Hex(0,-3), sprite:[['titanShip',0,-10,1]] },
+    {name:'Load', num: 0, colour:[50,47,73], hex:new Hex(-4,-1), sprite:[['titanShip',0,-10,1]] },
+    {name:'Load', num: 1, colour:[50,47,73], hex:new Hex(-3,0), sprite:[['titanShip',0,-10,1]] },
+    {name:'Load', num: 2, colour:[50,47,73], hex:new Hex(-4,2), sprite:[['titanShip',0,-10,1]] },
+    {name:'Load', num: 3, colour:[50,47,73], hex:new Hex(-3,3), sprite:[['titanShip',0,-10,1]] },
+  ],
+
+
   techs : [
     //centre
     {name:'Antimatter Extraction', tech:'titanTech', colour:[50,47,73], requires:['battleshipTech', 'missileDestroyerTech', 'defShieldTech'], hex:new Hex(0,0), cost:10, sprite:[['titanShip',0,-10,1]] },
@@ -25,7 +66,7 @@ const data = {
     {name:'Asteroid Navigation', tech:'navAsteroid', colour:[50,47,73], requires:['asteroidMove', 'navBeacon'], hex:new Hex(-1,4), cost:6, sprite:[['asteroids',2,-12,0.75],['navBeaconCross',-17,-30,1]] },
     {name:'Navigation Beacons', tech:'navBeacon', colour:[50,47,73], requires:['scoutShipTech'], hex:new Hex(-3,4), cost:6, sprite:[['navBeaconCross',-17,-30,1]] },
     {name:'Nebula Navigation', tech:'navNebula', colour:[50,47,73], requires:['nebulaResearchPostTech', 'navBeacon'], hex:new Hex(-4,3), cost:6, sprite:[['nebula',1,-11,0.75],['navBeaconCross',-17,-30,1]]  },
-    {name:'Nebula Frigate', tech:'nebulaFrigateTech', colour:[51,49,50], requires:['nebulaVision'], hex:new Hex(-4,1), cost:99999, sprite:[['padlockIcon',-12,-15,1]] },
+    {name:'Nebula Frigate', tech:'nebulaFrigateTech' , colour:[51,49,50], requires:['nebulaVision'], hex:new Hex(-4,1), cost:99999, sprite:[['padlockIcon',-12,-15,1]] },
     {name:'Harvest Protostar', tech:'harvestProtostar', colour:[50,47,73], requires:['harvestHydrogen'], hex:new Hex(-3,-1), cost:6, sprite:[['protostar',1,-10,0.75],['harvestProtostar',0,-11,0.75]] },
     {name:'Radiation Shield', tech:'armouredDestroyerTech', colour:[50,47,73], requires:['asteroidIceMining'], hex:new Hex(-1,-3), cost:6, sprite:[['armouredDestroyer',0,-10,1]] },
     //3rd ring, clockwise from top

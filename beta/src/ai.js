@@ -3,7 +3,7 @@
 /*global
 Hex, state, getShipOnHex, getUpdatedViewMask, data,
 findPossibleMoves, findPossibleAttacks, applyDamage,
-makeMenu, onMenuItemClicked,
+makeBuildBar, onTopPanelItemClicked,
 getTerrainDefVal, subTurn,
 applyTerrainDamage, getTerrainDamage
 */
@@ -43,10 +43,10 @@ function takeAIturn(){
 
 
   viewHexes.forEach(hex => {
-    let menu = makeMenu(hex);
+    let menu = makeBuildBar(hex);
     if (menu.length && Math.random() > 0.5){
       let choice = menu[Math.floor(Math.random() * menu.length)];
-      onMenuItemClicked(choice, hex)
+      onTopPanelItemClicked(choice, hex)
     }
   })
 

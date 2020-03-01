@@ -8,32 +8,56 @@
   body {background-color: #101010}
   body {overflow: hidden; }
   img {display: none}
+
+  /* #glasspane {
+     position: absolute;     left: 50px;     top: 50px;      padding: 0px 20px 10px 10px;
+     background: rgba(0, 0, 0, 0.3);     border: thin solid rgba(255, 255, 255, 0.6);
+      color:# rgba(65, 65, 220, 1.0);     font-family: Droid Sans, Arial, Helvetica, sans-serif;
+     font-size: 12px;     cursor: pointer;
+  }
+  #glasspane p {    color# rgba(255, 255, 255, 0.5);  } */
+
   </style>
   <!--meta charset="UTF-8" user-scalable=no/-->
   <meta name="viewport" content="width=device-width,
     initial-scale=0.45, maximum-scale=1, user-scalable=0"/>
   <link rel="stylesheet" href="" type="text/css"/>
 
+<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-auth.js"></script>
+
   <script src="./src/library.js"></script>
   <script src="./src/variableSetup.js"></script>
   <script src="./src/shipLogic.js"></script>
-  <script src="./src/menuLogic.js"></script>
+  <script src="./src/buildBarLogic.js"></script>
   <script src="./src/gameLogic.js"></script>
+  <script src="./src/menuLogic.js"></script>
   <script src="./src/ai.js"></script>
   <script src="./src/gameInput.js"></script>
   <script src="./src/consoleLogic.js"></script>
   <script src="./src/viewLogic.js"></script>
   <script src="./src/gameSprites.js"></script>
   <script src="./src/gameOutput.js"></script>
+  <script src="./src/dataBaseLogic.js"></script>
   <script src="./src/gameSetup.js"></script>
+
 
 </head>
 <body>
 <div class=wrap>
 <p id="log" style="text-align: left; position: fixed; top: 120px; left: 20px; z-index: 999; color: rgba(255,255,255,0.4);">
 </p>
-<canvas id="menu" width="800" height="100" style="border:1px solid #d3d3d3;"></canvas>
+<canvas id="topPanel" width="800" height="100" style="border:1px solid #d3d3d3;"></canvas>
 <canvas id="board" width="800" height="800" style="border:1px solid #d3d3d3;"></canvas>
+<canvas id="mainMenu" width="800" height="800" style="display: block; border:1px  solid #d3d3d3;"></canvas>
+<canvas id="newGameMenu" width="800" height="800" style="display: block; border:1px  solid #d3d3d3;"></canvas>
+<canvas id="loadGameMenu" width="800" height="800" style="display: block; border:1px  solid #d3d3d3;"></canvas>
+<canvas id="techTree" width="800" height="800" style="display: block; border:1px  solid #d3d3d3;"></canvas>
+<canvas id="nextTurnScreen" width="800" height="800" style="display: block; border:1px  solid #d3d3d3;"></canvas>
+
+<!-- div id='glasspane'> <h2 class='title'>Bouncing Balls</h2>   <a id='startButton'>Start</a> </div> -->
+
 
 </div>
 </body>
@@ -42,7 +66,13 @@
 document.body.querySelector("#board").addEventListener("click", boardClick) ;
 document.body.querySelector("#board").addEventListener("mousedown", mousedown);
 document.body.querySelector("#board").addEventListener("wheel", mouseWheel);
-document.body.querySelector("#menu").addEventListener("click", menuClick);
+document.body.querySelector("#topPanel").addEventListener("click", topPanelClick);
+document.body.querySelector("#mainMenu").addEventListener("click", mainMenuClick);
+//document.body.querySelector("#newGameMenu").addEventListener("click", newGameMenuClick);
+//document.body.querySelector("#loadGameMenu").addEventListener("click", loadGameMenuClick);
+document.body.querySelector("#techTree").addEventListener("click", techTreeClick);
+document.body.querySelector("#nextTurnScreen").addEventListener("click", nextTurnScreenClick);
+
 
 document.body.querySelector("#board").addEventListener("touchstart", touchstart);
 document.body.addEventListener("keydown", keyHandle);
@@ -53,10 +83,14 @@ window.onload = () => {
   console.log("Hi");
   translateContext(new Vec(-400,-400));
   scaleContext(0.6);
+  //changeCanvas("nextTurnScreen");
+  firebase.initializeApp(firebaseConfig);
+  firebase.auth().onAuthStateChanged(authStateChangeHandler);
+  replaceState( setup(5, 9, 2, false, "default", generateID(20)))
   drawScreen();
 }
 
-drawScreen();
+//drawScreen();
 
 
 </script>

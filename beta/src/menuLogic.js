@@ -1,79 +1,285 @@
 "use strict"
-
-
 /*global
-state, territoryState, shipState, getShipOnHex, data
+state, data, quickSetup, changeCanvas, randomName,
+drawScreen,
+replaceState,  setupNew,
+      updateHandleList, updateCacheGameList,
+      loginSignupConsole,
 */
-
 /* eslint-disable no-unused-vars */
 
-function makeMenu(hex){
-  // console.log("makemenu");
-  let base = state.baseArray.find(b => b.hex.compare(hex));
-  let tile = state.tiles.get(hex.id);
-  let ship =  getShipOnHex(hex); //shipArray.find(e => e.location.compare(hex));
-  // console.log("makeMenu",base, tile, ship, hex.id);
-  return data.thingList.filter(pos => {                                        // make a map to include failure point
+function makeConfigFromMenu(){
+  let online = menuData.NewGameData.Online;
+  let config = {}
+
+  config.boardSize = menuData.NewGameData.BoardSize;
+  config.allied = true;
+  config.gameName = menuData.NewGameData.GameName;
 
 
-  //  console.log("pos ", pos);
-    if(pos.price > state.playerData[state.playerTurn].money) return false;
-    // console.log(" price  success");
+  if (online){
 
-    if(pos.terrain.length !== 0 &&
-       !pos.terrain.find(e => e === tile.terrain)) return false;
-    // console.log(" terrain  success");
+    let tempPlayerlist = menuData.OnlinePlayers.map(x => {
+      if(x.PlayerType === "None" || x.PlayerType === "AI"){return x}
+      else{return {PlayerType:"Human", Alliance:x.Alliance}}
+    })
+    console.log("tempPlayerlist", tempPlayerlist);
+    config.numHumans = tempPlayerlist.filter(x => x.PlayerType === "Human").length;
+    config.numPlayers = tempPlayerlist.filter(x => x.PlayerType === "AI").length + config.numHumans;
+    config.playerlist = tempPlayerlist.filter(x=> x.PlayerType !== "None").map(x => x.PlayerType);
 
-    if(pos.territoryState && pos.territoryState > territoryState(hex)) return false;
-    // console.log(" territoryState  success");
+  } else{
+    config.numHumans = menuData.OfflinePlayers.filter(x => x.PlayerType === "Human").length;
+    config.numPlayers = menuData.OfflinePlayers.filter(x => x.PlayerType === "AI").length + config.numHumans;
+    config.playerlist = menuData.OfflinePlayers.filter(x=> x.PlayerType !== "None").map(x => x.PlayerType);
+  }
+  // config.numHumans = menuData.OfflinePlayers.filter(x => x.PlayerType === "Human").length;
+  // config.numPlayers = menuData.OfflinePlayers.filter(x => x.PlayerType === "AI").length + config.numHumans;
 
-    if(pos.resource && pos.resource !== tile.resource) return false;
+  config.alliesGrid = makePlayerAlianceArrayFromMenu(config, online)
 
-    if(pos.base && !state.baseArray.filter(b => {return b.hex.compare(hex) && b.owner === state.playerTurn})[0]) {
-      return false;
-    }
-    // console.log(" base  success");
-
-    if(pos.inhabitedPlanet){ if (!base) return false; }
-    // console.log(" inhabitedPlanet  success");
-
-    if(pos.shipState === "noShip" && ship) return false;
-    // console.log(" noShip  success");
-
-    if(pos.shipState === "ownPresent" && (!ship || ship.owner !== state.playerTurn)) return false;
-    // console.log(" ownPresent  success");
-
-    if(pos.shipState === "ownPresentUnmoved"  && (!ship || ship.owner !== state.playerTurn || ship.moved === true)){
-      return false;
-    }
-    // console.log(" ownPresentUnmoved  success");
-
-    if(pos.shipState === "noEnemy" &&  getShipOnHex(hex) && shipState(hex) < 1) return false;
-    // console.log(" noEnemy  success");
-
-    if(pos.tech && !state.playerData[state.playerTurn].tech[pos.tech]) return false;
-    // console.log(" tech  success");
-    // if(pos.tech && pos.tech.length > 0){
-    //   for (let t of pos.tech){ if(!state.playerData[state.playerTurn].tech[t]) return false; }
-    // }
-
-    if(pos.thingPresent && pos.thingPresent.find(t => t === "navBeacon") && !tile.navBeacon) return false;
-    // console.log(" thingPresent  success");
-    // Self check
-
-    if(pos.nextTo && !hex.neighbours.filter(x => x.mag < state.boardSize).find((x)=> state.tiles.get(x.id).terrain === pos.nextTo)) return false;
-
-    if(pos.thing === "navBeacon"){if (tile.navBeacon && tile.navBeacon.owner === state.playerTurn) return false;}
-    if(pos.thing === "navAsteroid"){if (tile.navBeacon && tile.navBeacon.owner === state.playerTurn) return false;}
-    if(pos.thing === "navNebula"){if (tile.navBeacon && tile.navBeacon.owner === state.playerTurn) return false;}
-
-
-
-    if(pos.type === "industry" && tile.station) return false;
-
-    if(pos.thing === "inhabitedPlanet" &&  base && base.owner === state.playerTurn) return false;
-
-    return true
-
-  }).map(pos => pos.thing);
+  console.log("config", config);
+  return config
 }
+
+function makePlayerAlianceArrayFromMenu(config, online){
+//  let playerlist; //= menuData.OfflinePlayers.filter(x=> x.PlayerType !== "None").map(x => x.PlayerType)
+  let alliance; //= menuData.OfflinePlayers.filter(x=> x.PlayerType !== "None").map(x => x.Alliance)
+
+  if (online){
+    alliance = menuData.OnlinePlayers.filter(x=> x.PlayerType !== "None").map(x => x.Alliance);
+  } else{
+    //playerlist = menuData.OfflinePlayers.filter(x=> x.PlayerType !== "None").map(x => x.PlayerType);
+    alliance = menuData.OfflinePlayers.filter(x=> x.PlayerType !== "None").map(x => x.Alliance);
+  }
+
+
+  let alliesGrid = []
+
+  for(let i = 0; i < config.numPlayers; i++){
+    alliesGrid[i] = [];
+    for(let j = 0; j < config.numPlayers; j++){ alliesGrid[i][j] = alliance[i] === alliance[j] }
+  }
+  console.log("playerlist, alliesGrid",  alliesGrid);
+  return  alliesGrid;
+}
+
+function makeMetaFromMenu(){
+  let meta = {online:true, playergrid: []};
+  let tempPlayergrid =  menuData.OnlinePlayers.filter(x=> !(x.PlayerType === "None"))
+  tempPlayergrid = tempPlayergrid.map( (x,i) => [i,x.PlayerType])
+  tempPlayergrid =  tempPlayergrid.filter(x=> !(x[1] === "AI"));
+  tempPlayergrid =  tempPlayergrid.map(x => [...x, cacheHandleList.find(y => y[1] === x[1] )[2] ]);
+//  console.log("tempPlayergrid", tempPlayergrid);
+  meta.playergrid = tempPlayergrid;
+  console.log("meta", meta);
+  return meta;
+}
+// function makeOfflinePlayerListFromMenu(){
+//   return menuData.OfflinePlayers.filter(x=> x.PlayerType !== "None").map(x => x.PlayerType)
+// }
+
+
+
+// function makeAlliesGridMenu(config, playerlist){
+//   let alliance = menuData.OfflinePlayers.filter(x=> x.PlayerType !== "None").map(x => x.Alliance)
+//   console.log("alliance", alliance);
+//   let alliesGrid = []
+//
+//   for(let i = 0; i < config.numPlayers; i++){
+//     if(config.allied){
+//       alliesGrid[i] = [];
+//       for(let j = 0; j < config.numPlayers; j++){ alliesGrid[i][j] = alliance[i] === alliance[j] }
+//     } else {
+//       alliesGrid[i] = [];
+//       for(let j = 0; j < config.numPlayers; j++){ alliesGrid[i][j] = i === j }
+//     }
+//   }
+//   console.log(alliesGrid);
+//   return alliesGrid;
+// }
+
+let menuData = {
+  Screen:"MainMenu",
+
+  LoadGameOptions:{Online:true, Page:1, PageSize:4},
+
+  NewGameData:{Online:false, GameName:"DefaultName", BoardSize: 8},
+  OfflineOptions:["None", "AI", "Human"],
+  OfflinePlayers:[
+    {PlayerType:"Human", Alliance:1},
+    {PlayerType:"Human", Alliance:2},
+    {PlayerType:"Human", Alliance:3},
+    {PlayerType:"AI", Alliance:4},
+    {PlayerType:"AI", Alliance:5},
+    {PlayerType:"AI", Alliance:6},
+  ],
+  OnlineDefaultOptions:["None", "AI", ],
+  OnlineOptions:["None", "AI", ],
+  OnlinePlayers:[
+    {PlayerType:"AI", Alliance:1},
+    {PlayerType:"AI", Alliance:2},
+    {PlayerType:"AI", Alliance:3},
+    {PlayerType:"AI", Alliance:4},
+    {PlayerType:"AI", Alliance:5},
+    {PlayerType:"AI", Alliance:6},
+  ]
+}
+
+
+function onTechHexClicked (hex){
+  let tech = data.techs.find(t => t.hex.compare(hex));
+  let player = state.playerData[state.playerTurn];
+
+  if(!player.tech[tech.tech] && player.money >= tech.cost){
+    if(!tech.requires || tech.requires.filter(r => !player.tech[r]).length === 0){
+      player.tech[tech.tech] = true;
+      player.money -= tech.cost;
+    }
+  }
+}
+
+
+function onMenuHexClicked (hex){
+  //
+  // let opt = data.mainMenu.find(t => t.hex.compare(hex));
+  // let action = opt.name;
+  // console.log(opt);
+
+  if(menuData.Screen === "MainMenu"){
+    let opt = data.mainMenu.find(t => t.hex.compare(hex));
+    let action = opt.name;
+    console.log(opt);
+
+    switch(action){
+    case "Login/Signup":
+      loginSignupConsole();
+      break;
+    case "Load":
+      menuData.Screen = "loadGameMenu";
+      console.log(menuData.Screen);
+      break;
+    case "Quick Setup":
+      quickSetup();
+      changeCanvas("nextTurnScreen");
+      break;
+    case "Setup":
+      menuData.Screen = "NewGame";
+      console.log("menuData.Screen === NewGame");
+      // changeCanvas("newGameMenu");
+      break;
+    }
+  }
+
+  else if(menuData.Screen === "loadGameMenu"){
+    let opt = data.loadGameMenu.find(t => t.hex.compare(hex));
+    let action = opt.name;
+    console.log(opt);
+
+    switch(action){
+    case 'Refresh':
+      updateHandleList(); updateCacheGameList();
+      break;
+    case 'Online':
+      console.log("online clicked");
+      menuData.LoadGameOptions.Online = !menuData.LoadGameOptions.Online;
+      break;
+    case 'Page':
+      menuData.LoadGameOptions.Page = ((menuData.LoadGameOptions.Page) % (cacheGameList.length/menuData.LoadGameOptions.PageSize)) +1
+      console.log(menuData.LoadGameOptions.Page);
+      break;
+    case 'Load':
+      console.log("loading", opt.num + (menuData.LoadGameOptions.PageSize * (menuData.LoadGameOptions.Page -1)) );
+      loadGameFromID(cacheGameList[opt.num + (menuData.LoadGameOptions.PageSize * (menuData.LoadGameOptions.Page -1))][0])
+      //  loadGameFromID()
+      break;
+    }
+  }
+
+
+  else if(menuData.Screen === "NewGame"){
+    let opt = data.newGameMenu.find(t => t.hex.compare(hex));
+    let action = opt.name;
+    console.log(opt);
+
+    switch(action){
+    case 'Online':
+      console.log("online clicked");
+      menuData.NewGameData.Online = !menuData.NewGameData.Online;
+      break
+    case "GameName":
+      menuData.NewGameData.GameName = randomName();
+      drawScreen();
+      break;
+    case "BoardSize":
+      menuData.NewGameData.BoardSize = (menuData.NewGameData.BoardSize - 6) % 10 + 8
+      break;
+    case "Make":
+      console.log("Make ");
+      if(menuData.NewGameData.Online){
+        replaceState(setupNew(makeConfigFromMenu(),  makeMetaFromMenu())      );
+      }
+      else{replaceState(setupNew(makeConfigFromMenu(),  {online:false})      );}
+      break;
+    case "Refresh Friends":
+      updateHandleList(); updateCacheGameList();
+      menuData.OnlineOptions = menuData.OnlineDefaultOptions.concat(cacheHandleList.map(x=> x[1]))
+      console.log(menuData.OnlineOptions);
+      break;
+    case "PlayerType":
+      if(menuData.NewGameData.Online){
+        menuData.OnlinePlayers[opt.num].PlayerType = cycleArray(menuData.OnlineOptions, menuData.OnlinePlayers[opt.num].PlayerType, 1)
+      }
+      else{
+        menuData.OfflinePlayers[opt.num].PlayerType = cycleArray(menuData.OfflineOptions, menuData.OfflinePlayers[opt.num].PlayerType, 1)
+      }
+      break;
+    case "Alliance":
+      if(menuData.NewGameData.Online){menuData.OnlinePlayers[opt.num].Alliance = menuData.OnlinePlayers[opt.num].Alliance % 6 + 1;}
+      else{menuData.OfflinePlayers[opt.num].Alliance = menuData.OfflinePlayers[opt.num].Alliance % 6 + 1;}
+      break;
+    }
+  }
+  drawScreen();
+}
+
+function cycleArray(array, current, step){
+  let index = array.indexOf(current)
+  if (index === -1) return array[0]
+  else return array[(index + step + array.length) % (array.length)]
+}
+
+
+
+function quickSetup(){
+  let config =  {numPlayers: 4, boardSize: 8, numHumans: 2, playersTogether:false}
+  config.gameName = randomName();
+  config.playerlist = ["Human", "Human", "AI","AI"];
+  config.alliesGrid = [
+    [true,false,false,false],
+    [false,true,false,false],
+    [false,false,true,false],
+    [false,false,false,true],
+  ]
+  replaceState(setupNew( config, {online: false}));
+}
+
+// function onNewGameMenuHexClicked (hex){
+//
+//   let opt = data.newGameMenu.find(t => t.hex.compare(hex));
+//   let action = opt.name;
+//
+//   switch(action){
+//   case "GameName":
+//     menuData.NewGameData.GameName = randomName();
+//     drawScreen()
+//     break;
+//   case "BoardSize":
+//     menuData.NewGameData.BoardSize = (menuData.NewGameData.BoardSize - 6) % 10 + 8
+//     break;
+//   case "Make":
+//
+//     break;
+//   }
+//   console.log(opt);
+// }

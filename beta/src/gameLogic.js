@@ -1,18 +1,18 @@
 "use strict"
 
 /*global
-drawScreen, sel:true, screenSettings,
+drawScreen, sel:true,
 nextTurn,
 state,
-onMenuItemClicked,
-preturn:true, makeMenu,
+onTopPanelItemClicked,
+preturn:true, makeBuildBar,
 findPossibleAttacks, getShipOnHex, findPossibleMoves,
 buildShip,
-translateContextTo, getXYfromHex, drawMenu, getUpdatedViewMask
+drawMenu, getUpdatedViewMask
 data
-takeAIturn,
 subTurn,
-autoSave
+autoSave, changeCanvas, toggleTechTree,
+saveToServer, debug, takeAIturn,
 */
 
 // techs,
@@ -21,7 +21,7 @@ autoSave
 
 
 function onHexClicked(clickHex){
-  if(preturn){preturn = false; return }
+//  if(preturn){preturn = false; return }
   let viewMask = getUpdatedViewMask(state);
 
   let possibleAttacks = [], possibleMoves = [];
@@ -33,12 +33,12 @@ function onHexClicked(clickHex){
     if(sel.state === 2){
       if (clickHex.compare(sel.hex)) sel = {state:0,  moves:[], attacks:[], menu: []};
       else sel = {state:0,  moves:[], attacks:[], menu: []};
-    //  else sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeMenu(clickHex)};
+    //  else sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeBuildBar(clickHex)};
     }
 
     else if (sel.state === 1){
       if (clickHex.compare(sel.hex)) {
-        sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeMenu(clickHex)};
+        sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeBuildBar(clickHex)};
       }
 
       else if(sel.moves.find( e =>  e[0].compare(clickHex))) {
@@ -54,7 +54,7 @@ function onHexClicked(clickHex){
         else{
           sel.ship.attacked = true;
           sel = {state:0, moves:[], attacks:[], menu:[]}
-        //  sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeMenu(clickHex)};
+        //  sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeBuildBar(clickHex)};
         }
         sel.menu = [];
       }
@@ -65,7 +65,7 @@ function onHexClicked(clickHex){
           applyDamage(sel.ship, target, true, getTerrainDefVal(target, clickHex));
           state.history[subTurn()].push({type:"attack" , rand:Math.random(), path:[clickHex, sel.ship.hex]})
           sel.ship.moved = true; sel.ship.attacked = true;
-          if(sel.ship.special.afterburner){sel.ship.moved = false;}
+          if(sel.ship.special && sel.ship.special.afterburner){sel.ship.moved = false;}
         }
         else { console.log("error in attacks"); }
 
@@ -85,10 +85,10 @@ function onHexClicked(clickHex){
         if(possibleMoves.length || possibleAttacks.length){
           sel = {state:1, hex:clickHex, ship:currentShip, moves:possibleMoves, attacks: possibleAttacks}
         }
-        else sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeMenu(clickHex)};
+        else sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeBuildBar(clickHex)};
       }
       else{
-        sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeMenu(clickHex)};
+        sel = {state:2, hex:clickHex, moves:[], attacks:[], menu: makeBuildBar(clickHex)};
       }
     }
   } else  sel = {state:0,  moves:[], attacks:[], menu: []};
@@ -107,7 +107,7 @@ function territoryState(hex){
 }
 
 
-function onMenuItemClicked(item, hex = sel.hex){
+function onTopPanelItemClicked(item, hex = sel.hex){
   let tile = state.tiles.get(hex.id);
   let ship = getShipOnHex(hex);
   let thing = data.thingList.find(t => t.thing === item);
@@ -158,19 +158,6 @@ function onMenuItemClicked(item, hex = sel.hex){
   drawScreen();
   drawMenu();
 }
-
-function onTechHexClicked (hex){
-  let tech = data.techs.find(t => t.hex.compare(hex));
-  let player = state.playerData[state.playerTurn];
-
-  if(!player.tech[tech.tech] && player.money >= tech.cost){
-    if(!tech.requires || tech.requires.filter(r => !player.tech[r]).length === 0){
-      player.tech[tech.tech] = true;
-      player.money -= tech.cost;
-    }
-  }
-}
-
 
 function getTerrainDefVal(ship, hex){
 
@@ -278,8 +265,26 @@ function repair(ship){
 
 }
 
-function nextTurn(){
-  if (state.playerData[state.playerTurn].type === "human") autoSave();
+
+
+async function nextTurn(){
+
+  if (!preturn || debug) {
+    turnLogic()
+    while (state.playerData[state.playerTurn].type === "AI") {takeAIturn(),turnLogic()}
+
+    if (state.meta.online ){
+      alert("sending game");
+      await  saveToServer();
+    }
+  }
+  else if(state.meta.online){
+    if (checkForUpdatedServerGame()) loadGameFromID(state.gameID)
+  }
+}
+
+function turnLogic(){
+  if (state.playerData[state.playerTurn].type === "Human") autoSave();
 
   state.playerData[state.playerTurn].money += state.playerData[state.playerTurn].income;
 
@@ -295,20 +300,23 @@ function nextTurn(){
     state.turnNumber += 1;
   }
   state.history.push([]);
-  translateContextTo(getXYfromHex(state.playerData[state.playerTurn].capital));
-  screenSettings.openTechTree = false;
-  drawMenu(); drawScreen();
+  state.log.push(`newturn: turn${state.turnNumber}, player ${state.playerTurn}`)
+  // translateContextTo(getXYfromHex(state.playerData[state.playerTurn].capital));
+
+  toggleTechTree(false);
+  preturn = true;
+  changeCanvas("nextTurnScreen");
 
   state.log.push(`newturn: turn${state.turnNumber}, player ${state.playerTurn}`)
 
   sel = {state:0, attacks:[], menu:[], moves:[]}
   drawMenu(); drawScreen();
-  preturn = true;
-
-  if(state.playerData[state.playerTurn].type === "AI"){
-    takeAIturn();
-    nextTurn()
-  }
+  //
+  //
+  // if(state.playerData[state.playerTurn].type === "AI"){
+  //   takeAIturn();
+  //   nextTurn()
+  // }
 }
 
 function reSetIncomes(){

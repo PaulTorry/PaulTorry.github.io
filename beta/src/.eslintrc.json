@@ -5,10 +5,10 @@
 
     "env": {           "browser": true       },
 
-    "parserOptions": {        "ecmaVersion": 6      },
+    "parserOptions": {        "ecmaVersion": 8      },
 
       "rules": {
-         "eqeqeq": 2 ,
+         "eqeqeq": 1 ,
          "no-console": 0,
          "strict": 0,
          "padded-blocks": 0,

@@ -1,13 +1,14 @@
 "use strict";
 
 /* global
-Vec, Hex, sel:true,
+Vec, Hex, sel:true, menuData
+getXYfromHex,
 
 state,
 
 drawScreen, drawMenu, screenSettings, interactiveConsole
-nextTurn,  onMenuItemClicked,  onTechHexClicked, onHexClicked,
-preturn,
+nextTurn,  onTopPanelItemClicked,  onTechHexClicked, onMenuHexClicked, onHexClicked,
+preturn:true,
 */
 
 /* eslint-disable no-unused-vars, one-var, */
@@ -15,7 +16,7 @@ preturn,
 let mouseDownLocation = new Vec();
 let mouseDownLocationABS = new Vec();
 let fingerDistance = null;
-
+let currentCanvas;
 
 function getRealXYfromScreenXY (pt) {
   return pt.scale(1 / screenSettings.scale).add(screenSettings.screenOffset);
@@ -72,6 +73,7 @@ function removeMousemove(event){
 
 
 function mouseWheel(event){
+  //console.log(event);
   event.preventDefault();
   if (event.deltaY>0){    scaleContext(1/1.1);  }
   if (event.deltaY<0){    scaleContext(1.1);  }
@@ -92,15 +94,22 @@ function drag(event){
 }
 
 
-function menuClick(event){
+function topPanelClick(event){
 
   event.preventDefault();
   if(event.offsetX < 90 && event.offsetY < 100){nextTurn()}
   else if (event.offsetY < 90 && event.offsetX > 710) {
-    if(!preturn)screenSettings.openTechTree = !screenSettings.openTechTree;
+
+    if(!preturn) toggleTechTree();
   }
   else if ( event.offsetX > 655 && event.offsetX < 700 && event.offsetY > 5 && event.offsetY < 50 ) {
-    interactiveConsole();
+    if (currentCanvas === "mainMenu"){
+      if (preturn) changeCanvas("nextTurnScreen")
+      else changeCanvas("board")
+    }
+    else changeCanvas("mainMenu")
+    menuData.Screen = "MainMenu";
+    // interactiveConsole();
   }
   else if(event.offsetY < 90 && event.offsetY > 10 && !screenSettings.openTechTree){
     console.log(event.offsetX);
@@ -109,17 +118,26 @@ function menuClick(event){
     console.log(num);
     if (num && sel.menu[num-1]){
       console.log(sel, sel.menu, sel.menu[num-1]);
-      onMenuItemClicked(sel.menu[num-1]);
+      onTopPanelItemClicked(sel.menu[num-1]);
     }
   }
-  else{
-    let clickHex = Hex.getUnitHexFromXY((new Vec(event.offsetX,  event.offsetY).add(screenSettings.techTreeOffset.invert())).scale(1/35))
-    onTechHexClicked(clickHex);
-  }
+
   drawScreen();
   drawMenu();
 }
 
+function toggleTechTree(newState){
+  if (newState === undefined) newState = !screenSettings.openTechTree;
+  screenSettings.openTechTree = newState;
+  if(newState) changeCanvas("techTree");
+  else{changeCanvas("board")}
+}
+
+function techTreeClick(event) {
+  let clickHex = Hex.getUnitHexFromXY((new Vec(event.offsetX,  event.offsetY).add(screenSettings.techTreeOffset.invert())).scale(1/35))
+  onTechHexClicked(clickHex);
+  drawScreen();
+}
 
 function boardClick(event) {
   let clickHex = Hex.getUnitHexFromXY(getRealXYfromScreenXY(new Vec(event.offsetX,  event.offsetY))
@@ -129,6 +147,42 @@ function boardClick(event) {
   drawScreen();
 }
 
+function mainMenuClick(event) {
+  console.log("mainMenuClick");
+  let clickHex = Hex.getUnitHexFromXY((new Vec(event.offsetX,  event.offsetY).add(screenSettings.techTreeOffset.invert())).scale(1/45))
+  onMenuHexClicked(clickHex);
+
+  drawScreen();
+}
+
+
+function loadGameMenuClick(event) {
+  console.log("loadGameMenuClick");
+}
+
+function nextTurnScreenClick(event) {
+  console.log("nextTurnScreenClick");
+  if(!state.meta.online || true){
+    translateContextTo(getXYfromHex(state.playerData[state.playerTurn].capital));
+    changeCanvas("board");
+    preturn = false;
+  }
+  drawScreen();
+
+}
+
+
+function changeCanvas(canvas){
+  document.body.querySelector("#board").style.display= "none";
+  document.body.querySelector("#techTree").style.display= "none";
+  document.body.querySelector("#mainMenu").style.display= "none";
+  document.body.querySelector("#newGameMenu").style.display= "none";
+  document.body.querySelector("#loadGameMenu").style.display= "none";
+  document.body.querySelector("#nextTurnScreen").style.display= "none";
+  if (canvas === "board" && preturn) console.log("Ooops skipping nextTurnScreen");
+  document.body.querySelector(`#${canvas}`).style.display= "block";
+  currentCanvas = canvas;
+}
 
 function touchstart(event) {
   let {pageX,pageY} = event.touches[0];

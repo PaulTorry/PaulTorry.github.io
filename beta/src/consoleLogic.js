@@ -6,39 +6,21 @@ state:true
 drawScreen,
 debug:true,
 interactiveConsole,
-setup
 data,
 screenSettings,
-randomInt, sessionInfo
+randomInt,
+firebase, loggedInPlayer, signupViaPrompt, checkForUpdatedServerGame, makeAlliesGridMenu,
+loginViaPrompt,
+replaceState, setupNew, cacheHandleList, cacheGameList, loadGameFromID
+saveToServer,
+
 */
 
 /* eslint-disable no-unused-vars */
 
-const serverPath = //"https://hexbackendtest.herokuapp.com/userSaves"
-//"https://test1-a393.restdb.io/rest/coll";
-"https://test1-a393.restdb.io/rest/savegames"
-//"https://hexbackendtest.herokuapp.com/userSaves"
-const apikey = "5dbdfb7064e7774913b6e80e";
 
 
-function makeRequest(callback = console.log, type = "GET"){
-  var xhr = new XMLHttpRequest();
-  xhr.withCredentials = true;
 
-  xhr.addEventListener("readystatechange", function () {
-    if (this.readyState === 4) {
-      console.log(this.responseText);
-    }
-  });
-
-  xhr.open(type, serverPath);
-  xhr.setRequestHeader("content-type", "application/json");
-  xhr.setRequestHeader("x-apikey", apikey);
-  xhr.setRequestHeader("cache-control", "no-cache");
-  //  xhr.setRequestHeader("samesite", "none");
-
-  xhr.send(data);
-}
 
 
 function randomName(){
@@ -52,119 +34,205 @@ function randomName(){
 
 function interactiveConsole (num = ""){
   console.log(num);
+  console.log("loggedInPlayer:  ", loggedInPlayer)
   let ans = prompt(`Current Game Name: ${state.gameName}
     1. New Game,
     2. Local Saves (load and save),
     3: Network Saves (load and save),
-    4: Cheat,
-    5: Toggle Debug,
-    6: Show Trails,
-    7: Get game list from server
-    8: Send game '${state.gameName}' to server`, num);
+    4: Cheat / Debug
+    5: Show Trails,
+    6: Login Logout SignUp
+    `, num);
 
   if(ans === "1"){
-    if (prompt("Are you sure y/n","y")==="y"){
-      let ans2 = Math.min(Number(prompt("Number of players (Max 6)", 4)),6);
-      let ans3 = Number(prompt("Number of Humans ", 2));
-      let ans4 = Number(prompt("Size of Board ", 8));
-      let ans5 = prompt("Allied Humans y/n", "n")
-      let ans6 = prompt("Game Name", randomName())
-      let ans7 = prompt("Multiplayer Game y/n", "n")
-      state.boardSize = ans4;
-      if(ans5 === "y") state = setup(ans2, state.boardSize, ans3, true, ans6);
-      if(ans5 === "n") state = setup(ans2, state.boardSize, ans3, false, ans6);
-      if(ans7 === "y") postToServer();
-    }
+    setupGameViaPrompt()
   }
-
   if(ans === "2"){
     let saveLoad = prompt("Load or Save\n 1: Load\n 2: Save", "1")
-    if(saveLoad === "1") load(prompt("Type Save Name: (or 'a' for autoSave or 'clear')\n" + saveNames()))
+    if(saveLoad === "1") {load(prompt("Type Save Name: (or 'a' for autoSave or 'clear')\n" + JSON.parse(localStorage.getItem("#savenames"))))}
     if(saveLoad === "2") saveAs(prompt("Type Save Name", state.gameName))
   }
   if(ans === "3"){
-    if(sessionInfo.currentGame){
-      let opt = prompt("Load or Save game with id: " + sessionInfo.currentGame + "\n 1: Load\n 2: Save", "1")
-      if(opt === "1"){
-        fetch(serverPath + "/" + sessionInfo.currentGame).
-          then(response => {return response.json()}).then(loadGameFromID)
-      }
-      if(opt === "2"){
-        console.log();
-        fetch(serverPath + "/" + sessionInfo.currentGame, {
-          method: "PUT", headers: {"Content-Type": "application/json","x-apikey": apikey,},
-          body:JSON.stringify({name: state.gameName, currentGame:packState()})
-        }).then(response => {return console.log(response.json())})
-      }
-    }
-    else alert("Start a new game (option1) or \nLoad a game from server (option7)or \nSave this game as a new server slot (option8) ")
-
+    let saveLoad = prompt("Load or Save\n 1: Load\n 2: Save", "1")
+    if(saveLoad === "1") {loadNetworkGameConsole()}
+    else if(saveLoad === "2") {saveToServer()}
   }
   if(ans === "4"){
-    let cheat = prompt("How do you want to cheat\n 1: Money\n 2: Tech", "1")
+    let cheat = prompt("How do you want to cheat\n 1: Money\n 2: Tech\n 3: View and debug", "1")
     if(cheat === "1"){
-      console.log("Cheating Money");
       state.playerData[state.playerTurn].money = 99;
     }
     if(cheat === "2"){
-      console.log("Cheating Tech");
-      data.techs.forEach(t => {
-        state.playerData[state.playerTurn].tech[t.tech] = true;
-      })
+      data.techs.forEach(t => { state.playerData[state.playerTurn].tech[t.tech] = true; })
+    }
+    if(cheat === "3"){       debug = !debug;  }
+  }
+  if(ans === "5"){ screenSettings.showTrails = !screenSettings.showTrails;  }
+  if(ans === "6"){loginSignupConsole()}
+
+  if(ans === "7"){ console.log(checkForUpdatedServerGame()) }
+  if(ans === "9"){
+    makeMetaFromMenu()
+    // console.log("state.playerData",state.playerData);
+    // console.log(menuData.OfflinePlayers.filter(x => x.PlayerType === "Human"));
+  //  console.log(getGameParamsViaPrompt());
+  //  console.log("lastSaved  localGameInfo", lastSaved, localGameInfo);
+  }
+  drawScreen();
+}
+
+function loginSignupConsole(){
+  let log = prompt("1: Login \n2: Logout \n 3: Signup ", "")
+  if(log === "1"){ console.log("login"); loginViaPrompt()    }
+  if(log === "2"){ console.log("logout"); firebase.auth().signOut()  }
+  if(log === "3"){ console.log("signup"); signupViaPrompt() }
+}
+
+
+async function setupGameViaPrompt(){
+  let ans7 = prompt("Multiplayer Game y/n", "y")
+  if(ans7 === "n"){
+    replaceState(setupNew(getGameParamsViaPrompt(false, ), {online: false}))
+
+  }
+  if(ans7 === "y") {
+    if (loggedInPlayer){ // firebase.auth().currentUser){
+      let meta = await setupMetaViaPrompt()
+      console.log("meta",meta);
+      //  state = await setupStateViaPrompt(tempMeta);
+      let players;
+      if (meta.playergrid) players = meta.playergrid.length;
+      replaceState( setupNew(getGameParamsViaPrompt(meta.online, players), meta));
+    //  localGameInfo = setlocalGameInfo();
+    }
+    else {
+      console.log("not logged in");
+      loginViaPrompt()
     }
   }
-  if(ans === "5"){
-    debug = !debug;
-  }
-  if(ans === "6"){
-    screenSettings.showTrails = !screenSettings.showTrails;
-  }
-  if(ans === "7"){
-    fetch(serverPath, {headers: {"Content-Type": "application/json", "x-apikey": apikey}}).
-      then(response => {return response.json()}).then(getServerLoad)
-  }
-  if(ans === "8"){  postToServer()  }
-  if(ans === "9"){ makeRequest(); }
   drawScreen();
 }
 
+async function setupMetaViaPrompt(){
+  let meta = {online:true, playergrid: []}
+  //let handleList =  await getHandleList()
+  let additionalPlayergrid =  await getAdditionalPlayers(cacheHandleList, [0, loggedInPlayer.uid, loggedInPlayer.handle])
+  meta.playergrid = additionalPlayergrid;
+  // console.log("additionalPlayergrid", additionalPlayergrid);
+  return meta
+}
 
+function getGameParamsViaPrompt(online=false, numHumansParam){
+  let config = {}
+  let numPlayers = Math.min(Number(prompt("Number of players (Max 6)", 4)),6);
+  if (numPlayers === null) return null;
+  else config.numPlayers = numPlayers
 
+  let numHumans;
+  if(online) {numHumans = numHumansParam;}
+  else numHumans = Number(prompt("Number of Humans ", 2));
+  if (numHumans === null) return null;
+  else config.numHumans = numHumans;
 
-function postToServer(){
-  fetch(serverPath, {
-    method: "POST",
-    headers: {"Content-Type": "application/json", "x-apikey": apikey},
-    body:JSON.stringify({name: state.gameName, currentGame:packState()})
-  }).
-    then(r => {return (r.json())}).
-    then(r => {(sessionInfo.currentGame=r.id,r)})
-  console.log("new game ID: ", sessionInfo.currentGame);
+  let boardSize = Number(prompt("Size of Board ", 8));
+  if (boardSize === null) return null;
+  else config.boardSize = boardSize;
+
+  let allied = prompt("Allied Humans y/n", "y")
+  if (allied === null) return null;
+  else {
+    if(allied === "y" || allied === "y") config.allied = true;
+    else config.allied = false;
+  }
+  let gameName = prompt("Game Name", randomName())
+  if (gameName === null) return null;
+  else config.gameName = gameName;
+  //console.log(config);
+
+  config.playerlist = makePlayerListConsole(config)
+  config.alliesGrid = makeAlliesGridConsole(config)
+  return config
+}
+
+function makePlayerListConsole(config){
+  let playerlist = []
+  for(let i = 0; i < config.numPlayers; i++){  playerlist.push("AI")  }
+  for(let i = 0; i < config.numHumans; i++){ playerlist[i] = "Human";  }
+  return playerlist;
+}
+
+function makeAlliesGridConsole(config){
+  let alliesGrid = []
+  for(let i = 0; i < config.numPlayers; i++){
+    if(config.allied){
+      alliesGrid[i] = [];
+      for(let j = 0; j < config.numPlayers; j++){ alliesGrid[i][j] = config.playerlist[i] === config.playerlist[j] }
+    } else {
+      alliesGrid[i] = [];
+      for(let j = 0; j < config.numPlayers; j++){ alliesGrid[i][j] = i === j }
+    }
+  }
+  return alliesGrid;
+}
+
+async function setupStateViaPrompt(meta){
+  let players;
+  if (meta.playergrid) players = meta.playergrid.length;
+  let tempState = setupNew(getGameParamsViaPrompt(meta.online, players), meta)
+  //console.log(tempState);
+  return tempState;
 }
 
 
-function loadGameFromID(serverData){
-  state = unpackState(JSON.parse(serverData.currentGame));
-  drawScreen();
+function setlocalGameInfo(){
+  let players = state.meta.playergrid;
+  let uidlist = players.map((a) => a[0]);
+  let player = uidlist.indexOf(loggedInPlayer.uid);
+  console.log("state, players, uidlist, player", state, players, uidlist, player );
+  return {player:player}
 }
 
-function getServerLoad(serverData){
-  console.log("saveData", serverData);
-  let gamelist = serverData.rows.map(r => r.name)
-  console.log("gamelist", gamelist);
-  let response = prompt(
-    "Type the number for the savegame you want to load" +
-    gamelist.reduce( (a,c,i)  => { if(c){return" \n "+ (i+1) +  " " + c + a} else{return a}}," ")
-  )
-  if(Number(response)/Number(response) !== 1){console.log("Type a Number in the prompt");}
-  let gameStateObj = serverData.rows[Number(response) - 1]
-  console.log(gameStateObj);
-
-  sessionInfo.currentGame = gameStateObj.id;
-  state = unpackState(JSON.parse(gameStateObj.currentGame));
-
-  drawScreen();
+function getAdditionalPlayers(handleList, startingList){
+  var index = 1;
+  console.log("getAdditionalPlayers handleList", handleList);
+  let additionalPlayergrid = [startingList];
+  let finishedAddingPlayers = false;
+  while(!finishedAddingPlayers){
+    let ans = prompt(JSON.stringify( handleList), "Press cancel to stop adding")
+    if (ans === null) finishedAddingPlayers = true
+    else {
+      let newEntry = [index, handleList[Number(ans)][2], handleList[Number(ans)][1]]
+      if(additionalPlayergrid.findIndex(x => JSON.stringify(x[1]) === JSON.stringify(newEntry[1])) === -1) {
+        additionalPlayergrid.push(newEntry)
+        index++
+        console.log(additionalPlayergrid);
+      }
+    }
+  }
+  return additionalPlayergrid
 }
+
+function loadNetworkGameConsole(){
+  var index = 0;
+  var IDArray = [];
+
+  let promptText = "select the number for your Game:  ";
+  console.log("blah 1 ", cacheGameList);
+  cacheGameList.forEach(function(doc) {
+    console.log("blah ", doc[1]);
+    let {name, users, turnNumber, playerTurn, when} = doc[1]
+    promptText =  promptText + index + " => " + " Name: "+ name + " turn: "+ playerTurn + "\n";
+    index += 1;
+    IDArray.push(doc[0])
+  })
+
+  console.log("IDArray cacheGameList" , IDArray, cacheGameList);
+  const gameID = IDArray[Number(prompt(promptText))]
+  loadGameFromID(gameID)
+}
+
+
+// Helpers
 
 function getTimestamp(){
   let d = new Date();
@@ -172,35 +240,13 @@ function getTimestamp(){
 }
 
 function getTurnstamp(){
-  return `T:${state.turnNumber}-P:${state.playerTurn}}`;
-}
-
-function autoSave(){
-  console.log("autosaving");
-  saveAs("autoSave");
+  return `T:${state.turnNumber}-P:${state.playerTurn}`;
 }
 
 function packState(){
   let savestate = state.clone();
   savestate.tiles = [...state.tiles]
   return JSON.stringify(savestate);
-}
-
-function saveAs(savename = "quicksave"){
-  if (savename === "") savename = "autoSave";
-  let savenames = JSON.parse(localStorage.getItem("#savenames")) || [];
-  if (!savenames.length) savenames = [];
-  let saveString = packState();
-  if (savename !== "autoSave") console.log(saveString);
-  localStorage.setItem(savename, saveString);
-  if (savenames.indexOf(savename) === -1) savenames.push(savename);
-  localStorage.setItem("#savenames", JSON.stringify(savenames));
-}
-
-function saveNames(){
-  // localStorage.setItem("#savenames", JSON.stringify(["h","y"]));
-  // console.log(JSON.parse(localStorage.getItem("#savenames")));
-  return JSON.parse(localStorage.getItem("#savenames"))
 }
 
 function unpackState(newState){
@@ -224,14 +270,30 @@ function unpackState(newState){
   return newState;
 }
 
+// Local Save Logic
+
+function autoSave(){
+  console.log("autosaving");
+  saveAs("autoSave");
+}
+
+function saveAs(savename = "quicksave"){
+  if (savename === "") savename = "autoSave";
+  let savenames = JSON.parse(localStorage.getItem("#savenames")) || [];
+  if (!savenames.length) savenames = [];
+  let saveString = packState();
+  if (savename !== "autoSave") console.log(saveString);
+  localStorage.setItem(savename, saveString);
+  if (savenames.indexOf(savename) === -1) savenames.push(savename);
+  localStorage.setItem("#savenames", JSON.stringify(savenames));
+}
+
 function load(savename = "quicksave"){
   if (savename === "a") {savename = "autoSave"; console.log("auto");}
   if (savename === "clear"){localStorage.setItem("#savenames", JSON.stringify([]))}
   else{
     let newState = JSON.parse(localStorage.getItem(savename));
     console.log(newState);
-
-
-    state = unpackState(newState);
+    replaceState(unpackState(newState))
   }
 }

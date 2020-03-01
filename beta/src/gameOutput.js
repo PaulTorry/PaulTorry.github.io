@@ -1,27 +1,21 @@
 "use strict"
 
-
-
 /*global
 screenSettings, Vec, Hex,
 drawScreen,  sel, state,
 getUpdatedViewMask,
-simpleShapes, getTerrainDamage
- Map,  makeNewViewMask, preturn,
+simpleShapes, getTerrainDamage,
+ preturn, menuData,
 gameSprites, debug, territoryState,  whichPlanetsTerritory,
 baseShapes,
 data, subTurn,
+localGameInfo,
 getRealXYfromScreenXY
-
 */
 
 
 /* eslint-disable no-unused-vars */
-
-
 //  document.getElementById("menu").height = 500;
-
-
 
 function getPlayerColour(player = state.playerTurn, opacity = 1, mid = false, dark = false){
   const playerColours = ["green", "red", "lightblue", "orange", "purple", "brown"];
@@ -49,17 +43,38 @@ function getColMap(player, transparency = 1){
   return (v) =>  mapColours(v, player, transparency)
 }
 
-
 const selectedColour = ["white", "purple", "blue", "orange"];
-
 
 function getXYfromHex(hexCoord, size=screenSettings.hexSize){return Hex.getXYfromUnitHex(hexCoord).scale(size)}
 
-
-
-
 function drawScreen() {
+  //drawlog();
+  drawNextTurnScreen()
+  drawBoard();
+  drawTopPanel();
+  drawMenu();
+  // drawNewGameMenu();
+  drawTechTree();
+  //  if (screenSettings.openTechTree){drawTechTree()}
+}
 
+function drawNextTurnScreen(){
+  let ss = screenSettings;
+  let c = document.getElementById("nextTurnScreen").getContext("2d");
+  c.clearRect(-99999,-99999,199999,199999);
+  c.fillStyle = "white";
+
+  let center = new Vec(0,0).add(ss.techTreeOffset);
+  let {x,y} = center;
+  // let playerLoc = getXYfromHex(state.playerData[state.playerTurn].capital);
+  // let {x,y} = playerLoc;
+  let logoSize = 0.3
+  drawFromData(c, gameSprites["logo"], 400 - 300*logoSize, 200 - 300 * logoSize, (x)=>x , logoSize)
+  drawText(c, `Player ${state.playerTurn} . ${localGameInfo.player}`, center.add(new Vec(-80,0)), 50, getPlayerColour(state.playerTurn) )
+  drawText(c, `Click to Start`, center.add(new Vec(-80,50)), 30, "white" )
+}
+
+function drawBoard(){
   let ss = screenSettings;
   var c = document.getElementById("board").getContext("2d");
   c.clearRect(-99999,-99999,199999,199999);                            // FIX THIS @TODO
@@ -68,7 +83,20 @@ function drawScreen() {
   c.lineWidth = 5
 
   let viewMask = getUpdatedViewMask(state)
-  if (preturn){  viewMask = makeNewViewMask(new Map());}
+
+  // if(!state.meta.online){
+  //   console.log("getting ofline viewmask", state.playerTurn);
+  //   viewMask = getUpdatedViewMask(state)
+  // }
+  // else{
+  // //  getUpdatedViewMask(state, localGameInfo.player)
+  //   console.log("making viewmask om draw", localGameInfo.player );
+  //
+  //   viewMask = getUpdatedViewMask(state, localGameInfo.player)
+  // }
+  // //  let viewMask = getUpdatedViewMask(state, who)
+  // if (preturn){  viewMask = makeNewViewMask(new Map());}
+
 
 
   for(let [id , tile] of state.tiles){
@@ -178,17 +206,8 @@ function drawScreen() {
   }
 
 
-  if (preturn){
-    let playerLoc = getXYfromHex(state.playerData[state.playerTurn].capital);
-    let {x,y} = playerLoc;
-    drawFromData(c, gameSprites["logo"], x-90, y-230, (x)=>x , 0.3)
-    drawText(c, `Player ${state.playerTurn}`, playerLoc.add(new Vec(-80,0)), 50, getPlayerColour(state.playerTurn) )
-    drawText(c, `Click to Start`, playerLoc.add(new Vec(-80,50)), 30, "white" )
-  }
 
 
-  //drawlog();
-  drawMenu();
 }
 
 function drawlog(){
@@ -200,11 +219,11 @@ function drawlog(){
   log.innerHTML = current;
 }
 
-function drawMenu(){
-  let arrows = [];
+function drawTopPanel(){
   let ss = screenSettings;
-  var c = document.getElementById("menu").getContext("2d");
-  document.getElementById("menu").height = 100 + 700 * ss.openTechTree;
+  let c = document.getElementById("topPanel").getContext("2d");
+  document.getElementById("topPanel").style.borderColor = getPlayerColour(state.playerTurn);
+  document.getElementById("topPanel").height = 100 //+ 700 * ss.openTechTree;
   c.clearRect(-99999,-99999,199999,199999);
   c.strokeStyle = "white";
 
@@ -242,57 +261,129 @@ function drawMenu(){
   c.stroke();
 
   drawText(c, `Player: ${state.playerTurn}`, new Vec(100,20), 15, "white" )
+  if(state.meta.online && state.playerData[state.playerTurn].type === "Human"){
+    drawText(c, `Handle: ${state.meta.playergrid.find(x => x[0] === state.playerTurn)[1]}`, new Vec(100,35), 15, "white" )
+  }
   drawText(c, `Turn: ${state.turnNumber}`, new Vec(180,20), 15, "white" )
   if(!preturn) drawText(c, `Money:  ${state.playerData[state.playerTurn].money}  ( ${state.playerData[state.playerTurn].income} )`, new Vec(245,20), 15, "white" )
   if(!preturn) drawText(c, `City Points: **`, new Vec(360,20), 15, "white" )
+  drawText(c, `Game: ${state.gameName}`, new Vec(420,40), 15, "white" )
+  if(loggedInPlayer) drawText(c, `Logged in Player: ${loggedInPlayer.handle}`, new Vec(420,60), 15, "white" )
 
-  if (screenSettings.openTechTree){
-    data.techs.forEach((t)=>{
-      if (t.requires){ t.requires.forEach(r => {
-        arrows.push([t.hex, data.techs.filter(tt => tt.tech === r)[0].hex]);
-      })}
-    })
+}
 
-    arrows.forEach(a => {
-      drawArrow(c, getXYfromHex(a[1],35).add(ss.techTreeOffset),getXYfromHex(a[0],35).add(ss.techTreeOffset));
-    })
 
-    data.techs.forEach((t)=>{
-      let center = getXYfromHex(t.hex, 35).add(ss.techTreeOffset);
+function drawMenu(){
+  let ss = screenSettings;
+  let c = document.getElementById("mainMenu").getContext("2d");
+
+  for(let [id , tile] of state.tiles){
+    let {x,y} = getXYfromHex(tile.hex)//.subtract(new Vec(screenSettings.hexSize,screenSettings.hexSize))
+    drawPoly(c, simpleShapes["hexVert"], getXYfromHex(tile.hex, 45).add(ss.techTreeOffset), 45, 1,  "rgb(37,32,45)", "rgb(18,15,34)"  );
+  }
+
+  if(menuData.Screen === "MainMenu"){
+    data.mainMenu.forEach((t)=>{
+      let center = getXYfromHex(t.hex, 45).add(ss.techTreeOffset);
       let {x,y} = center;
-      let draw = t.cost < 99;
-      //let col = `rgb(${t.colour[0]},${t.colour[1]},${t.colour[2]})`
+      drawFromData(c, gameSprites["roundedHex"], x - 58, y - 53, x => "rgb(30,30,30)" ,0.65,0,true);
+      drawText(c, `${t.name}`, center.add(new Vec(-30,25)) , 12, "rgb(159,216,206)" )
+    })
+  }
 
-      if (t.cost > 99){
-        drawFromData(c, gameSprites["roundedHex"], x - 48, y - 43, x => "rgb(30,30,30)" ,0.55,0,true);
+  if(menuData.Screen === "loadGameMenu"){
+    data.loadGameMenu.forEach((t)=>{
+      let center = getXYfromHex(t.hex, 45).add(ss.techTreeOffset);
+      let {x,y} = center;
+      drawFromData(c, gameSprites["roundedHex"], x - 58, y - 53, x => "rgb(30,30,30)" ,0.65,0,true);
+
+      let valueToOutput = menuData.LoadGameOptions[t.name] || "";
+      if (t.num || t.num === 0){
+        let numm =  t.num + (menuData.LoadGameOptions.PageSize * (menuData.LoadGameOptions.Page-1))
+        if( cacheGameList[numm] ) {
+          valueToOutput = cacheGameList[numm][1].name;
+        }
       }
+      //   else valueToOutput = menuData.OfflinePlayers[t.num][t.name]
+      // }
+      drawText(c, `${valueToOutput}`, center.add(new Vec(-30,5)) , 14, "rgb(159,216,206)" )
+      drawText(c, `${t.name} ${[t.num] || "1"}`, center.add(new Vec(-30,25)) , 12, "rgb(159,216,206)" )
+    })
+  }
 
-      else if (state.playerData[state.playerTurn].tech[t.tech]) {
-        drawFromData(c, gameSprites["roundedHex"], x - 48, y - 43, x => "rgb(18,15,34)" ,0.55,0,true)
-        drawFromData(c, gameSprites["roundedHexOutline"], x - 48, y - 43, getColMap(state.playerTurn, 1) ,0.55,0,true)
+  // console.log("igfqigf 1");
+  if(menuData.Screen === "NewGame"){
+    // console.log("igfqigf 2");
+    data.newGameMenu.forEach((t)=>{
+      let center = getXYfromHex(t.hex, 45).add(ss.techTreeOffset);
+      let {x,y} = center;
+      drawFromData(c, gameSprites["roundedHex"], x - 58, y - 53, x => "rgb(30,30,30)" ,0.65,0,true);
 
-      } else if ( t.cost > 99 || (t.requires &&
-        t.requires.find(r => !state.playerData[state.playerTurn].tech[r])
-      )) {
-        drawFromData(c, gameSprites["roundedHex"], x - 48, y - 43, x => "rgb(18,15,34)" ,0.55,0,true)
-        drawFromData(c, gameSprites["roundedHexOutline"], x - 48, y - 43, x => "rgb(36,34,73)" ,0.55,0,true)
-      } else {// if (draw){
-        drawFromData(c, gameSprites["roundedHex"], x - 48, y - 43, x => "rgb(18,15,34)" ,0.55,0,true)
-        drawFromData(c, gameSprites["roundedHexOutline"], x - 48, y - 43, x => "rgb(159,216,206)" ,0.55,0,true)
+      let valueToOutput = menuData.NewGameData[t.name] || "";
+      if (t.num || t.num === 0) {
+        if (menuData.NewGameData.Online) valueToOutput = menuData.OnlinePlayers[t.num][t.name]
+        else valueToOutput = menuData.OfflinePlayers[t.num][t.name]
       }
-
-
-
-      if(( draw || debug) && t.sprite) {
-        t.sprite.forEach(s => {
-          drawFromData(c, gameSprites[s[0]], x+s[1] , y+s[2] , getColMap(state.playerTurn, 1) ,0.55*s[3])
-        })
-      }
-      if(draw || debug) drawText(c, `${t.name}`, center.add(new Vec(-30,25)) , 12, "rgb(159,216,206)" )
-      if(draw || debug) drawText(c, `${t.cost}`, center.add(new Vec(-40,+6)) , 12, "rgb(159,216,206)" )
+      drawText(c, `${valueToOutput}`, center.add(new Vec(-30,5)) , 14, "rgb(159,216,206)" )
+      drawText(c, `${t.name} ${[t.num] || "1"}`, center.add(new Vec(-30,25)) , 12, "rgb(159,216,206)" )
     })
   }
 }
+
+function drawTechTree(){
+  let arrows = [];
+  let ss = screenSettings;
+  let c = document.getElementById("techTree").getContext("2d");
+  data.techs.forEach((t)=>{
+    if (t.requires){ t.requires.forEach(r => {
+      arrows.push([t.hex, data.techs.filter(tt => tt.tech === r)[0].hex]);
+    })}
+  })
+
+  arrows.forEach(a => {
+    drawArrow(c, getXYfromHex(a[1],35).add(ss.techTreeOffset),getXYfromHex(a[0],35).add(ss.techTreeOffset));
+  })
+
+  data.techs.forEach((t)=>{
+
+    let center = getXYfromHex(t.hex, 35).add(ss.techTreeOffset);
+    let {x,y} = center;
+    let draw = t.cost < 99;
+    //let col = `rgb(${t.colour[0]},${t.colour[1]},${t.colour[2]})`
+
+    if (t.cost > 99){
+      drawFromData(c, gameSprites["roundedHex"], x - 48, y - 43, x => "rgb(30,30,30)" ,0.55,0,true);
+    }
+
+    else if (state.playerData[state.playerTurn].tech[t.tech]) {
+      drawFromData(c, gameSprites["roundedHex"], x - 48, y - 43, x => "rgb(18,15,34)" ,0.55,0,true)
+      drawFromData(c, gameSprites["roundedHexOutline"], x - 48, y - 43, getColMap(state.playerTurn, 1) ,0.55,0,true)
+
+    } else if ( t.cost > 99 || (t.requires &&
+      t.requires.find(r => !state.playerData[state.playerTurn].tech[r])
+    )) {
+      drawFromData(c, gameSprites["roundedHex"], x - 48, y - 43, x => "rgb(18,15,34)" ,0.55,0,true)
+      drawFromData(c, gameSprites["roundedHexOutline"], x - 48, y - 43, x => "rgb(36,34,73)" ,0.55,0,true)
+    } else {// if (draw){
+      drawFromData(c, gameSprites["roundedHex"], x - 48, y - 43, x => "rgb(18,15,34)" ,0.55,0,true)
+      drawFromData(c, gameSprites["roundedHexOutline"], x - 48, y - 43, x => "rgb(159,216,206)" ,0.55,0,true)
+    }
+
+    if(( draw || debug) && t.sprite) {
+      t.sprite.forEach(s => {
+        drawFromData(c, gameSprites[s[0]], x+s[1] , y+s[2] , getColMap(state.playerTurn, 1) ,0.55*s[3])
+      })
+    }
+    if(draw || debug) drawText(c, `${t.name}`, center.add(new Vec(-30,25)) , 12, "rgb(159,216,206)" )
+    if(draw || debug) drawText(c, `${t.cost}`, center.add(new Vec(-40,+6)) , 12, "rgb(159,216,206)" )
+  })
+}
+
+
+
+
+
+
 
 function drawPoly(c, pointVec, center = new Vec(0,0), scale = 50, width, sColor, fColor){
   let {x:xx,y:yy} = center;
