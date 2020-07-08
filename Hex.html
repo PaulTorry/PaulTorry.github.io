@@ -23,9 +23,9 @@
     initial-scale=0.45, maximum-scale=1, user-scalable=0"/>
   <link rel="stylesheet" href="" type="text/css"/>
 
-<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-auth.js"></script>
+<script src="./src/firebasejs-7-6-1/firebase-app.js"></script>
+<script src="./src/firebasejs-7-6-1/firebase-firestore.js"></script>
+<script src="./src/firebasejs-7-6-1/firebase-auth.js"></script>
 
   <script src="./src/library.js"></script>
   <script src="./src/variableSetup.js"></script>
@@ -50,6 +50,7 @@
 </p>
 <canvas id="topPanel" width="800" height="100" style="border:1px solid #d3d3d3;"></canvas>
 <canvas id="board" width="800" height="800" style="border:1px solid #d3d3d3;"></canvas>
+<canvas id="buffer" width="3200" height="3200" style="display: none; border:1px solid #0303d3;"></canvas>
 <canvas id="mainMenu" width="800" height="800" style="display: block; border:1px  solid #d3d3d3;"></canvas>
 <canvas id="newGameMenu" width="800" height="800" style="display: block; border:1px  solid #d3d3d3;"></canvas>
 <canvas id="loadGameMenu" width="800" height="800" style="display: block; border:1px  solid #d3d3d3;"></canvas>
@@ -81,13 +82,17 @@ document.body.addEventListener("keydown", keyHandle);
 
 window.onload = () => {
   console.log("Hi");
-  translateContext(new Vec(-400,-400));
-  scaleContext(0.6);
+  //translateContext(new Vec(-400,-400));
+  //scaleView(0.6);
   //changeCanvas("nextTurnScreen");
   firebase.initializeApp(firebaseConfig);
   firebase.auth().onAuthStateChanged(authStateChangeHandler);
   replaceState( setup(5, 9, 2, false, "default", generateID(20)))
   drawScreen();
+
+  // const animate = (t) => {drawView(t); requestAnimationFrame(animate)}
+  // requestAnimationFrame(animate)
+  
 }
 
 //drawScreen();

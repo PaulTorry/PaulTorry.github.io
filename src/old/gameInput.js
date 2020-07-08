@@ -16,25 +16,45 @@ preturn:true,
 let mouseDownLocation = new Vec()
 let mouseDownLocationABS = new Vec()
 let fingerDistance = null
+//let currentCanvas
 
 function getRealXYfromScreenXY (pt) {
-  const ss = screenSettings
-  return pt.scale(1 / screenSettings.scale).add(screenSettings.viewOffset).add(screenSettings.bufferCenter).add(screenSettings.screenCenter)
+  return pt.scale(1 / screenSettings.scale).add(screenSettings.screenOffset)
 }
 
-function scaleView (sc) {
-  const newScale = screenSettings.scale * sc
-  screenSettings.scale = Math.max(0.2, Math.min(5, newScale))
+function scaleContext (sc) {
+  // console.log(sc,screenSettings.scale);
+  const ctx = document.getElementById('board').getContext('2d')
+
+  if (screenSettings.scale * sc < 0.2) sc = 1
+  if (screenSettings.scale * sc > 2) sc = 1
+
+  const viewCentre = getRealXYfromScreenXY(new Vec(400, 400))
+  screenSettings.scale *= sc
+  ctx.scale(sc, sc)
+  screenSettings.screenOffset = screenSettings.screenOffset.scale(1 / sc)
+  const newViewCentre = getRealXYfromScreenXY(new Vec(400, 400))
+
+  translateContext((newViewCentre.subtract(viewCentre)).scale(-1)) //     screenSettings.scale));
 }
 
-function translateView (dif) {
-  screenSettings.viewOffset = screenSettings.viewOffset.add(dif)
-  // @TODO bounds method on Vec
+function translateContext (dif, contextName = 'board') {
+  const ctx = document.getElementById(contextName).getContext('2d')
+
+  const viewCentre = getRealXYfromScreenXY(new Vec(400, 400))
+  screenSettings.screenOffset = screenSettings.screenOffset.add(dif)
+  ctx.translate(-dif.x, -dif.y)
+  const newViewCentre = getRealXYfromScreenXY(new Vec(400, 400))
+
+  if (newViewCentre.mag >= screenSettings.hexSize * state.boardSize * 1.5 + 50 &&
+    newViewCentre.mag > viewCentre.mag) { translateContext(dif.scale(-1), contextName) }
 }
 
-function translateViewTo (loc) {
-  screenSettings.viewOffset = loc
-  // @TODO bounds method on Vec
+function translateContextTo (loc, ctx = 'board') {
+  const c = document.getElementById(ctx).getContext('2d')
+  const dif = loc.subtract(screenSettings.screenOffset).subtract(screenSettings.screenCenter.scale(1 / screenSettings.scale))
+  screenSettings.screenOffset = screenSettings.screenOffset.add(dif)
+  c.translate(-dif.x, -dif.y)
 }
 
 function mousedown (event) {
@@ -52,23 +72,22 @@ function removeMousemove (event) {
 function mouseWheel (event) {
   // console.log(event);
   event.preventDefault()
-  if (event.deltaY < 0) { scaleView(1 / 1.1) }
-  if (event.deltaY > 0) { scaleView(1.1) }
-  drawView()
+  if (event.deltaY > 0) { scaleContext(1 / 1.1) }
+  if (event.deltaY < 0) { scaleContext(1.1) }
+  drawScreen()
 }
 
-function drag (e) {
-  const offset = new Vec(e.offsetX, e.offsetY)
-  if (mouseDownLocationABS.scale(-1).add(offset).scale(-1 / (screenSettings.scale)).mag > 20) {
+function drag (event) {
+  if (mouseDownLocationABS.scale(-1).add(new Vec(event.offsetX, event.offsetY)).scale(-1 / (screenSettings.scale)).mag > 20) {
     sel = { state: 0, actions: { attacks: [], menu: [] }, moves: [] }
-  //  drawScreen()
   }
-  e.preventDefault()
-  e.stopPropagation()
-  const dif = mouseDownLocation.subtract(offset)
-  translateView(dif.scale(screenSettings.scale))
-  mouseDownLocation = offset
-  drawView()
+  event.preventDefault()
+  event.stopPropagation()
+  var c = document.getElementById('board').getContext('2d')
+  const dif = mouseDownLocation.scale(-1).add(new Vec(event.offsetX, event.offsetY)).scale(-1 / (screenSettings.scale))
+  translateContext(dif)
+  mouseDownLocation = new Vec(event.offsetX, event.offsetY)
+  drawScreen()
 }
 
 function topPanelClick (event) {
@@ -85,12 +104,12 @@ function topPanelClick (event) {
     menuData.Screen = 'MainMenu'
     // interactiveConsole();
   } else if (event.offsetY < 90 && event.offsetY > 10 && !screenSettings.openTechTree) {
-    // console.log(event.offsetX)
-    // console.log((event.offsetX - 110), (event.offsetX - 110) / 70)
+    console.log(event.offsetX)
+    console.log((event.offsetX - 110), (event.offsetX - 110) / 70)
     const num = Math.ceil((event.offsetX - 110) / 70)
-    // console.log(num)
+    console.log(num)
     if (num && sel.menu[num - 1]) {
-      // console.log(sel, sel.menu, sel.menu[num - 1])
+      console.log(sel, sel.menu, sel.menu[num - 1])
       onTopPanelItemClicked(sel.menu[num - 1])
     }
   }
@@ -107,27 +126,16 @@ function toggleTechTree (newState) {
 }
 
 function techTreeClick (event) {
-  const offset = new Vec(event.offsetX, event.offsetY)
-  const clickHex = Hex.getUnitHexFromXY((offset.add(screenSettings.techTreeOffset.invert())).scale(1 / 35))
+  const clickHex = Hex.getUnitHexFromXY((new Vec(event.offsetX, event.offsetY).add(screenSettings.techTreeOffset.invert())).scale(1 / 35))
   onTechHexClicked(clickHex)
   drawScreen()
 }
 
-function getBufferXYfromViewXY (pt) {
-  const ss = screenSettings
-  return pt.subtract(ss.screenCenter).scale(ss.scale).add(ss.screenCenter).add(ss.viewOffset)
-}
-
 function boardClick (event) {
-  const offset = new Vec(event.offsetX, event.offsetY)
-
-  const bxy = getBufferXYfromViewXY(offset)
-  const uxy = bxy.scale(1 / screenSettings.hexSize)
-  const hex = Hex.getUnitHexFromXY(uxy)
-
-  console.log(offset, bxy, uxy, hex)
-
-  onHexClicked(hex)
+  const clickHex = Hex.getUnitHexFromXY(getRealXYfromScreenXY(new Vec(event.offsetX, event.offsetY))
+    .scale(1 / screenSettings.hexSize)
+  )
+  onHexClicked(clickHex)
   drawScreen()
 }
 
@@ -151,7 +159,7 @@ function checkPlayerTurn () {
 function nextTurnScreenClick (event) {
   console.log('nextTurnScreenClick')
   if (!state.meta.online || debug || checkPlayerTurn()) {
-    translateViewTo(getXYfromHex(state.playerData[state.playerTurn].capital).subtract(screenSettings.screenCenter))
+    translateContextTo(getXYfromHex(state.playerData[state.playerTurn].capital))
     changeCanvas('board')
     preturn = false
   }
@@ -196,17 +204,18 @@ function touchdrag (event) {
     const fingerDistanceNew = Math.sqrt((pageX - x2) * (pageX - x2) + (pageY - y2) * (pageY - y2))
     //  console.log(fingerDistanceNew + "fingerDistanceNew");
     if (fingerDistance) {
-      scaleView(fingerDistanceNew / fingerDistance)
+      scaleContext(fingerDistanceNew / fingerDistance)
     }
     fingerDistance = fingerDistanceNew
   } else fingerDistance = null
   const dif = mouseDownLocation.scale(-1).add(new Vec(pageX, pageY)).scale(-1 / (screenSettings.scale))
-  translateView(dif)
+  translateContext(dif)
   mouseDownLocation = new Vec(pageX, pageY)
   drawScreen()
 }
 
 function keyHandle (e) {
+//  console.log(e); 
   if (e.code === 'Tab') interactiveConsole()
   if (Number(e.key)) interactiveConsole(Number(e.key))
   if (e.key === 'ArrowRight') theta += 0.1
