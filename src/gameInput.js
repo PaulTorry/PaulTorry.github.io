@@ -17,10 +17,10 @@ let mouseDownLocation = new Vec()
 let mouseDownLocationABS = new Vec()
 let fingerDistance = null
 
-function getRealXYfromScreenXY (pt) {
-  const ss = screenSettings
-  return pt.scale(1 / screenSettings.scale).add(screenSettings.viewOffset).add(screenSettings.bufferCenter).add(screenSettings.screenCenter)
-}
+// function getRealXYfromScreenXY (pt) {
+//   const ss = screenSettings
+//   return pt.scale(1 / screenSettings.scale).add(screenSettings.viewOffset).add(screenSettings.bufferCenter).add(screenSettings.screenCenter)
+// }
 
 function scaleView (sc) {
   const newScale = screenSettings.scale * sc
