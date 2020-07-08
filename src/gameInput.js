@@ -107,6 +107,7 @@ function toggleTechTree (newState) {
 }
 
 function techTreeClick (event) {
+  if (event.offsetX > 720 && event.offsetY > 720) interactiveConsole()
   const offset = new Vec(event.offsetX, event.offsetY)
   const clickHex = Hex.getUnitHexFromXY((offset.add(screenSettings.techTreeOffset.invert())).scale(1 / 35))
   onTechHexClicked(clickHex)
@@ -196,11 +197,13 @@ function touchdrag (event) {
     const fingerDistanceNew = Math.sqrt((pageX - x2) * (pageX - x2) + (pageY - y2) * (pageY - y2))
     //  console.log(fingerDistanceNew + "fingerDistanceNew");
     if (fingerDistance) {
-      scaleView(fingerDistanceNew / fingerDistance)
+      scaleView(fingerDistance / fingerDistanceNew)
     }
     fingerDistance = fingerDistanceNew
   } else fingerDistance = null
-  const dif = mouseDownLocation.scale(-1).add(new Vec(pageX, pageY)).scale(-1 / (screenSettings.scale))
+  //const dif = mouseDownLocation.scale(-1).add(new Vec(pageX, pageY)).scale(-1 / (screenSettings.scale))
+  const dif = mouseDownLocation.subtract(new Vec(pageX, pageY)).scale(screenSettings.scale)
+
   translateView(dif)
   mouseDownLocation = new Vec(pageX, pageY)
   drawScreen()
