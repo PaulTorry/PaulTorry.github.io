@@ -71,9 +71,12 @@ function drawBuffer () {
   drawBoard(b)
   b.translate(...screenSettings.bufferCenter.scale(-1))
   if (screenSettings.lowRes) {
-    document.getElementById('intermediate').getContext('2d').drawImage(
+    const i = document.getElementById('intermediate').getContext('2d')
+
+    i.clearRect(-99999, -99999, 199999, 199999)
+    i.drawImage(
       document.getElementById('buffer'),
-      0, 0, 3200, 3200, 0, 0, 800, 800
+      0, 0, 3200, 3200, 0, 0, 1600, 1600
     )
   }
 }
@@ -95,8 +98,8 @@ function drawView () {
   } else {
     cover.drawImage(
       document.getElementById('intermediate'),
-      ...ss.screenCenter.scale(1 - ss.scale).add(ss.viewOffset.scale(1/4)).add(ss.intermediateCenter),
-      ...ss.screenCenter.scale(ss.scale / 2),
+      ...ss.screenCenter.scale(1 - ss.scale).add(ss.viewOffset.scale(1/2)).add(ss.intermediateCenter),
+      ...ss.screenCenter.scale(ss.scale),
       // ...Vec.zero,
       // ...ss.intermediateCenter,
       ...Vec.zero,

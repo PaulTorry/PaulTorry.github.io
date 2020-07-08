@@ -161,7 +161,7 @@ const screenSettings = {
   openTechTree: false,
   screenSize: 800,
   screenCenter: new Vec(400, 400),
-  intermediateCenter: new Vec(400, 400),
+  intermediateCenter: new Vec(800, 800),
   bufferSize: 3200,
   bufferCenter: new Vec(1600, 1600),
   viewOffset: new Vec(0, 0),
