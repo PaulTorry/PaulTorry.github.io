@@ -206,7 +206,7 @@ function touchdrag (event) {
 
   translateView(dif)
   mouseDownLocation = new Vec(pageX, pageY)
-  drawScreen()
+  drawView()
 }
 
 function keyHandle (e) {
