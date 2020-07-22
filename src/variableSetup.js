@@ -3,7 +3,15 @@
 /* global Hex, Vec,       */
 /* eslint-disable no-unused-vars */
 
+console.log(Vec.zero)
+
 const data = {
+
+  floatingButtons: [
+    { name: 'nextTurnButton', sprite: 'nextTurnButton', dimensionMultiplier: new Vec(-1, -1), offset: new Vec(60, 50), size: 50 },
+    { name: 'menuButton', sprite: 'menuButton', dimensionMultiplier: new Vec(1, -1), offset: new Vec(-120, 25), size: 30 },
+    { name: 'techTreeButton', sprite: 'techTreeButton', dimensionMultiplier: new Vec(1, -1), offset: new Vec(-60, 50), size: 50 }
+  ],
 
   mainMenu: [
     { name: 'Quick Setup', colour: [50, 47, 73], hex: new Hex(-3, 0), sprite: [['titanShip', 0, -10, 1]] },
@@ -103,10 +111,10 @@ const data = {
 
   thingList: [
 
-    { name: 'Nav. Beacon', thing: 'navBeacon', type: 'nav', price: 2, territoryState: 1, shipState: 'ownPresent', tech: 'navBeacon', terrain: ['space'], sprite: [['navBeaconCross', -15, -18, 1]] },
-    { name: 'Nav. Beacon', thing: 'navAsteroid', type: 'nav', price: 2, territoryState: 1, shipState: 'ownPresent', tech: 'navAsteroid', terrain: ['asteroids'], sprite: [['asteroids', 0, -2, 0.75], ['navBeaconCross', -15, -18, 1]] },
-    { name: 'Nav. Beacon', thing: 'navNebula', type: 'nav', price: 2, territoryState: 1, shipState: 'ownPresent', tech: 'navNebula', terrain: ['nebula'], sprite: [['nebula', 1, -2, 0.75], ['navBeaconCross', -15, -18, 1]] },
-    { name: 'Nav. Beacon', thing: 'navProto', type: 'nav', price: 2, territoryState: 1, shipState: 'ownPresent', tech: 'navNebula', terrain: ['protostar'], sprite: [['nebula', 1, -2, 0.75], ['navBeaconCross', -15, -18, 1]] },
+    { name: 'Nav. Beacon', thing: 'navBeacon', type: 'nav', price: 2, territoryState: 1, shipState: 'ownPresent', tech: 'navBeacon', terrain: ['space'], sprite: [['navBeaconCross', 0, 0, 1]] },
+    { name: 'Nav. Beacon', thing: 'navAsteroid', type: 'nav', price: 2, territoryState: 1, shipState: 'ownPresent', tech: 'navAsteroid', terrain: ['asteroids'], sprite: [['asteroids', 0, -2, 0.75], ['navBeaconCross', 0, 0, 1]] },
+    { name: 'Nav. Beacon', thing: 'navNebula', type: 'nav', price: 2, territoryState: 1, shipState: 'ownPresent', tech: 'navNebula', terrain: ['nebula'], sprite: [['nebula', 1, -2, 0.75], ['navBeaconCross', 0, 0, 1]] },
+    { name: 'Nav. Beacon', thing: 'navProto', type: 'nav', price: 2, territoryState: 1, shipState: 'ownPresent', tech: 'navNebula', terrain: ['protostar'], sprite: [['nebula', 1, -2, 0.75], ['navBeaconCross', 0, 0, 1]] },
 
     { name: 'Ast. Mining', thing: 'asteroidMining', type: 'industry', price: 2, income: 2, territoryState: 2, shipState: 'noEnemy', tech: 'asteroidMining', terrain: ['asteroids'], sprite: [['asteroids', 0, -2, 0.75], ['asteroidMining', 0, -2, 0.75]] },
     { name: 'Gas Extraction', thing: 'harvestGasGiant', type: 'industry', price: 2, income: 2, territoryState: 2, shipState: 'noEnemy', tech: 'harvestGasGiant', terrain: ['gasGiant'], sprite: [['gasGiant', 0, 0, 1], ['harvestGasGiant', 0, 0, 1]] },
@@ -157,17 +165,49 @@ const sessionInfo = {
 }
 
 const screenSettings = {
-  lowRes: true,
-  openTechTree: false,
-  screenSize: 800,
+  lowRes: false,
+  openTechTree: false, // to depreciate
   screenCenter: new Vec(400, 400),
-  intermediateCenter: new Vec(800, 800),
-  bufferSize: 3200,
-  bufferCenter: new Vec(1600, 1600),
-  viewOffset: new Vec(0, 0),
-  techTreeOffset: new Vec(400, 400),
   hexSize: 75,
-  scale: 1,
   showTrails: true,
-  currentCanvas: "nextTurnScreen"
+  currentCanvas: 'nextTurnView',
+  thingMenuLocation: { hexsize: 35, offset: new Vec(130, 90) }
+}
+
+const views = {
+  spaceView: {
+    center: new Vec(1600, 1600),
+    buffer: document.createElement('canvas'),
+    hexSize: 75,
+    offset: new Vec(0, 0),
+    zoom: 1
+  },
+  techTreeView: {
+    center: new Vec(400, 400),
+    buffer: document.createElement('canvas'),
+    hexSize: 35,
+    offset: new Vec(0, 0),
+    zoom: 1
+  },
+  menuView: {
+    center: new Vec(400, 400),
+    buffer: document.createElement('canvas'),
+    hexSize: 45,
+    offset: new Vec(0, 0),
+    zoom: 1
+  },
+  nextTurnView: {
+    center: new Vec(400, 400),
+    buffer: document.createElement('canvas'),
+    hexSize: 75,
+    offset: new Vec(0, 0),
+    zoom: 1
+  },
+  buttons: {
+    center: new Vec(400, 400),
+    buffer: document.createElement('canvas'),
+    hexSize: 35,
+    offset: new Vec(0, 0),
+    zoom: 1
+  }
 }

@@ -17,7 +17,7 @@ alert,
 
 /* eslint-disable no-unused-vars */
 
-function onHexClicked (clickHex) {
+function onSpaceHexClicked (clickHex) {
 //  if(preturn){preturn = false; return }
   const viewMask = getUpdatedViewMask(state)
 
@@ -145,7 +145,6 @@ function onTopPanelItemClicked (item, hex = sel.hex) {
   sel = { state: 0, actions: { attacks: [], menu: [] }, moves: [] }
   reSetIncomes()
   drawScreen()
-  drawMenu()
 }
 
 function getTerrainDefVal (ship, hex) {
@@ -278,14 +277,15 @@ function turnLogic () {
   state.log.push(`newturn: turn${state.turnNumber}, player ${state.playerTurn}`)
   // translateContextTo(getXYfromHex(state.playerData[state.playerTurn].capital));
 
-  toggleTechTree(false)
+  //toggleTechTree(false)
   preturn = true
-  changeCanvas('nextTurnScreen')
+  changeCanvas('nextTurnView')
 
   state.log.push(`newturn: turn${state.turnNumber}, player ${state.playerTurn}`)
 
   sel = { state: 0, actions: { attacks: [], menu: [] }, moves: [] }
-  drawMenu(); drawScreen()
+  //drawMenu();
+   drawScreen()
 }
 
 function reSetIncomes () {

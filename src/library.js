@@ -15,9 +15,27 @@ class Vec {
   add (b) { return new Vec(this.x + b.x, this.y + b.y) }
   addXY (x, y) { return new Vec(this.x + x, this.y + y) }
   subtract (b) { return new Vec(this.x - b.x, this.y - b.y) }
+  scaleByVec (a) { return new Vec(this.x * a.x, this.y * a.y) }
+  scaleXY (x, y) { return new Vec(this.x * x, this.y * y) }
   scale (m) { return new Vec(this.x * m, this.y * m) }
+ 
   dot (b) { return this.x * b.x + this.y * b.y }
   invert () { return this.scale(-1) }
+  distance ( a ) {
+   // console.log(this.subtract(a),this.subtract(a).mag )
+    return this.subtract(a).mag
+  }
+  bounds (b1, b2 = b1.invert()) {
+    const x2 = Math.min(b2.x, b1.x), x1 = Math.max(b2.x, b1.x); 
+    const y2 = Math.min(b2.y, b1.y), y1 = Math.max(b2.y, b1.y); 
+    const x = Math.max(x2, Math.min(x1, this.x))
+    const y = Math.max(y2, Math.min(y1, this.y))
+    // const x = Math.max(b2.x, Math.min(b1.x, this.x))
+    // const y = Math.max(b2.y, Math.min(b1.y, this.y))
+    //console.log(b1,b2,x2,x1,y2,y1,x,y);
+    return new Vec(x, y)
+  }
+  
   get mag () { return Math.sqrt((this.x * this.x) + (this.y * this.y)) }
 
   static fromID (id) {
@@ -82,6 +100,23 @@ class Hex {
     return idArray.map(Vec.getFromID)
   }
 
+  static nToHex(n, breadth, pointy = false){
+    const k = Math.floor(n / breadth)
+    const j = n % breadth - Math.floor(k/2)
+    if (pointy){ return new Hex(j, k) }
+    else { return new Hex(k, j) }
+  }
+
+  static hexToN(hex, breadth, pointy = false){
+    const {p, q} = hex
+    const rsToN = (r, s) => {
+       return r + Math.floor(s / 2) + s * breadth
+    }
+    if (pointy){ return rsToN(hex.p, hex.q) }
+    else { return rsToN(hex.q, hex.p) }
+  }
+
+
   // static getArray (input, Hexes) {
   //   const [pp, qq, rr, ...rest] = input
   //   if (pp === null || qq === null || rr === null) { return Hexes } else { return Hex.getArray(rest, Hexes.concat(new Hex(pp, qq, rr))) }
@@ -132,7 +167,7 @@ class Hex {
     ]
   }
 
-  static secondNeighboursDependants () {
+  static secondNeighboursDependants () {  
     return {
       '2,0': [new Hex(1, 0)], '2,-2': [new Hex(1, -1)], '-2,0': [new Hex(-1, 0)],
       '-2,2': [new Hex(-1, 1)], '0,2': [new Hex(0, 1)], '0,-2': [new Hex(0, -1)],
@@ -157,15 +192,17 @@ class Hex {
     ]
   }
 
-  static getXYfromUnitHex (hexCoord) {
-    const hexVec = { p: new Vec(1, 0), q: new Vec((-1 / 2), Math.sqrt(3) / 2), r: new Vec((-1 / 2), -Math.sqrt(3) / 2) }
-    return hexVec.p.scale(hexCoord.p).add(hexVec.q.scale(hexCoord.q))
-      .add(hexVec.r.scale(hexCoord.r))
+  static getXYfromUnitHex (hexCoord, pointy = false) {
+    const hexVecF = { p: new Vec(1, 0), q: new Vec((-1 / 2), Math.sqrt(3) / 2), r: new Vec((-1 / 2), -Math.sqrt(3) / 2) }
+    const hexVecP = { p: new Vec(Math.sqrt(3) / 2, (-1 / 2)), q: new Vec(0, 1), r: new Vec( -Math.sqrt(3) / 2, ( -1 / 2)) }
+    const hexVec = pointy ? hexVecP : hexVecF 
+    return hexVec.p.scale(hexCoord.p).add(hexVec.q.scale(hexCoord.q)).add(hexVec.r.scale(hexCoord.r))
   }
 
-  static getUnitHexFromXY (xy) {
-    const { p, q, r } = { p: new Vec(2 / (3), 0), q: new Vec((-2 / 6), Math.sqrt(3) / 3), r: new Vec((-2 / 6), -Math.sqrt(3) / 3) }
-    // let {p, q, r} = invHexVec;
+  static getUnitHexFromXY (xy, pointy = false) {
+    const hexVecF = { p: new Vec(2 / (3), 0), q: new Vec((-2 / 6), Math.sqrt(3) / 3), r: new Vec((-2 / 6), -Math.sqrt(3) / 3) }
+    const hexVecP = { p: new Vec(Math.sqrt(3) / 3, (-2 / 6)), q: new Vec(0, 2 /(3)), r: new Vec( -Math.sqrt(3) / 3, ( -2 / 6)) }
+    const { p, q, r } = pointy ?  hexVecP : hexVecF
     return Hex.hexRound(new Hex(xy.dot(p), xy.dot(q), xy.dot(r)))
   }
 
@@ -217,3 +254,10 @@ const PaulsMath = {
     else return (Math.min(a, b))
   }
 }
+
+
+
+// for (let i = 0; i <= 40; i++) {
+//   console.log(Hex.nToHex(i, 7, true).id)
+//   console.log(Hex.hexToN(Hex.nToHex(i, 7, true), 7, true))
+// }

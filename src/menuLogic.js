@@ -152,12 +152,11 @@ function onMenuHexClicked (hex) {
         break
       case 'Quick Setup':
         quickSetup()
-        changeCanvas('nextTurnScreen')
+        changeCanvas('nextTurnView')
         break
       case 'Setup':
         menuData.Screen = 'NewGame'
         console.log('menuData.Screen === NewGame')
-        // changeCanvas("newGameMenu");
         break
     }
   } else if (menuData.Screen === 'loadGameMenu') {

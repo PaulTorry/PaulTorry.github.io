@@ -3,7 +3,7 @@
 <head>
   <title>Space heX</title>
   <style>
-  body, html {height:100%; width:100%;}
+  body, html {height:100%; width:100%; margin:1px;}
   div.wrap {height:100%; width:100%; overflow:hidden;}
   body {background-color: #101010}
   body {overflow: hidden; }
@@ -48,57 +48,34 @@
 <div class=wrap>
 <p id="log" style="text-align: left; position: fixed; top: 120px; left: 20px; z-index: 999; color: rgba(255,255,255,0.4);">
 </p>
-<canvas id="topPanel" width="800" height="100" style="border:1px solid #d3d3d3;"></canvas>
+
 <canvas id="board" width="800" height="800" style="border:1px solid #d3d3d3;"></canvas>
-<canvas id="buffer" width="3200" height="3200" style="display: none; border:1px solid #0303d3;"></canvas>
-<canvas id="intermediate" width="1600" height="1600" style="display: none; border:1px solid #0303d3;"></canvas>
-<canvas id="mainMenu" width="800" height="800" style="display: block; border:1px  solid #d3d3d3;"></canvas>
-<canvas id="newGameMenu" width="800" height="800" style="display: block; border:1px  solid #d3d3d3;"></canvas>
-<canvas id="loadGameMenu" width="800" height="800" style="display: block; border:1px  solid #d3d3d3;"></canvas>
-<canvas id="techTree" width="800" height="800" style="display: block; border:1px  solid #d3d3d3;"></canvas>
-<canvas id="nextTurnScreen" width="800" height="800" style="display: block; border:1px  solid #d3d3d3;"></canvas>
-
-<!-- div id='glasspane'> <h2 class='title'>Bouncing Balls</h2>   <a id='startButton'>Start</a> </div> -->
-
 
 </div>
 </body>
 <script>
 
+// <canvas id="topPanel" width="800" height="100" style="border:1px solid #d3d3d3;"></canvas>
+
 document.body.querySelector("#board").addEventListener("click", boardClick) ;
 document.body.querySelector("#board").addEventListener("mousedown", mousedown);
 document.body.querySelector("#board").addEventListener("wheel", mouseWheel);
-document.body.querySelector("#topPanel").addEventListener("click", topPanelClick);
-document.body.querySelector("#mainMenu").addEventListener("click", mainMenuClick);
-//document.body.querySelector("#newGameMenu").addEventListener("click", newGameMenuClick);
-//document.body.querySelector("#loadGameMenu").addEventListener("click", loadGameMenuClick);
-document.body.querySelector("#techTree").addEventListener("click", techTreeClick);
-document.body.querySelector("#nextTurnScreen").addEventListener("click", nextTurnScreenClick);
-
-
+// document.body.querySelector("#topPanel").addEventListener("click", topPanelClick);
 document.body.querySelector("#board").addEventListener("touchstart", touchstart);
 document.body.addEventListener("keydown", keyHandle);
 
-//document.body.addEventListener('touchstart', function(e){ e.preventDefault(); });
-
 window.onload = () => {
   console.log("Hi");
-  //translateContext(new Vec(-400,-400));
-  //scaleView(0.6);
-  //changeCanvas("nextTurnScreen");
   firebase.initializeApp(firebaseConfig);
   firebase.auth().onAuthStateChanged(authStateChangeHandler);
-  replaceState( setup(5, 9, 2, false, "default", generateID(20)))
-  drawScreen();
-
-  // const animate = (t) => {drawView(t); requestAnimationFrame(animate)}
-  // requestAnimationFrame(animate)
   
+  replaceState( setup(5, 9, 2, false, "default", generateID(20)))
+  window.onresize = resizeScreen
+  document.body.querySelector("#board").requestFullscreen()
+  resizeScreen()
+  drawScreen(); 
+  document.body.querySelector("#board").requestFullscreen()
 }
-
-//drawScreen();
-
-
+document.body.querySelector("#board").requestFullscreen()
 </script>
-
 </html>

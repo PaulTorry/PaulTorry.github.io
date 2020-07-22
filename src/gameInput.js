@@ -1,13 +1,12 @@
 'use strict'
 
 /* global
-Vec, Hex, sel:true, menuData
+Vec, Hex, sel:true, menuData,
 getXYfromHex,
-
 state, debug, loggedInPlayer
-
+views,
 drawScreen, drawMenu, screenSettings, interactiveConsole
-nextTurn,  onTopPanelItemClicked,  onTechHexClicked, onMenuHexClicked, onHexClicked,
+nextTurn,  onTopPanelItemClicked,  onTechHexClicked, onMenuHexClicked, onSpaceHexClicked,
 preturn:true,
 */
 
@@ -17,24 +16,24 @@ let mouseDownLocation = new Vec()
 let mouseDownLocationABS = new Vec()
 let fingerDistance = null
 
-// function getRealXYfromScreenXY (pt) {
-//   const ss = screenSettings
-//   return pt.scale(1 / screenSettings.scale).add(screenSettings.viewOffset).add(screenSettings.bufferCenter).add(screenSettings.screenCenter)
-// }
-
-function scaleView (sc) {
-  const newScale = screenSettings.scale * sc
-  screenSettings.scale = Math.max(0.2, Math.min(5, newScale))
+function getViewXYfromScreenXY (pt, view = views.spaceView) {
+  return pt.subtract(screenSettings.screenCenter).scale(view.zoom).add(view.offset)
 }
 
-function translateView (dif) {
-  screenSettings.viewOffset = screenSettings.viewOffset.add(dif)
-  // @TODO bounds method on Vec
+function scaleView (sc, view = views[screenSettings.currentCanvas]) {
+  const newZoom = view.zoom * sc
+  view.zoom = Math.max(0.2, Math.min(5, newZoom))
+  translateView(Vec.zero, view)
 }
 
-function translateViewTo (loc) {
-  screenSettings.viewOffset = loc
-  // @TODO bounds method on Vec
+function translateView (dif, view = views[screenSettings.currentCanvas]) { // views.spaceView) {
+  const newOffset = view.offset.add(dif.scale(view.zoom))
+  view.offset = newOffset.bounds(view.center.subtract(screenSettings.screenCenter.scale(view.zoom)))
+}
+
+function translateViewTo (loc, view = views.spaceView) {
+  const newOffset = loc
+  view.offset = newOffset.bounds(view.center)
 }
 
 function mousedown (event) {
@@ -50,98 +49,107 @@ function removeMousemove (event) {
 }
 
 function mouseWheel (event) {
-  // console.log(event);
   event.preventDefault()
   if (event.deltaY < 0) { scaleView(1 / 1.1) }
   if (event.deltaY > 0) { scaleView(1.1) }
-  drawView()
+  drawScreen(false)
 }
 
-function drag (e) {
+function drag (e, view = views.spaceView) {
   const offset = new Vec(e.offsetX, e.offsetY)
-  if (mouseDownLocationABS.scale(-1).add(offset).scale(-1 / (screenSettings.scale)).mag > 20) {
-    sel = { state: 0, actions: { attacks: [], menu: [] }, moves: [] }
-  //  drawScreen()
-  }
-  e.preventDefault()
-  e.stopPropagation()
   const dif = mouseDownLocation.subtract(offset)
-  translateView(dif.scale(screenSettings.scale))
+  if (mouseDownLocationABS.subtract(offset).mag > 20) {
+    sel = { state: 0, actions: { attacks: [], menu: [] }, moves: [] }
+    drawScreen()
+  }
+  e.preventDefault(); e.stopPropagation()
+  translateView(dif)
   mouseDownLocation = offset
-  drawView()
+  drawScreen(false)
 }
 
-function topPanelClick (event) {
-  event.preventDefault()
-  if (event.offsetX < 90 && event.offsetY < 100) {
-    nextTurn()
-  } else if (event.offsetY < 90 && event.offsetX > 710) {
-    if (!preturn) toggleTechTree()
-  } else if (event.offsetX > 655 && event.offsetX < 700 && event.offsetY > 5 && event.offsetY < 50) {
-    if (screenSettings.currentCanvas === 'mainMenu') {
-      if (preturn) changeCanvas('nextTurnScreen')
-      else changeCanvas('board')
-    } else changeCanvas('mainMenu')
-    menuData.Screen = 'MainMenu'
-    // interactiveConsole();
-  } else if (event.offsetY < 90 && event.offsetY > 10 && !screenSettings.openTechTree) {
-    // console.log(event.offsetX)
-    // console.log((event.offsetX - 110), (event.offsetX - 110) / 70)
-    const num = Math.ceil((event.offsetX - 110) / 70)
-    // console.log(num)
-    if (num && sel.menu[num - 1]) {
-      // console.log(sel, sel.menu, sel.menu[num - 1])
-      onTopPanelItemClicked(sel.menu[num - 1])
-    }
-  }
+// function topPanelClick (event) {
+//   event.preventDefault()
+//   if (event.offsetY < 90 && event.offsetY > 10 && screenSettings.currentCanvas === 'spaceView') {
+//     const num = Math.ceil((event.offsetX - 110) / 70)
+//     if (num && sel.menu[num - 1]) {
+//       onTopPanelItemClicked(sel.menu[num - 1])
+//     }
+//   }
+//   drawScreen()
+// }
 
-  drawScreen()
-  drawMenu()
+const buttonFunctions = {
+  menuButton: toggleMenu,
+  techTreeButton: toggleTechTree,
+  nextTurnButton: nextTurn
+}
+
+function toggleMenu () {
+  if (screenSettings.currentCanvas === 'menuView') {
+    if (preturn) changeCanvas('nextTurnView')
+    else changeCanvas('spaceView')
+  } else changeCanvas('menuView')
+  menuData.Screen = 'MainMenu'
 }
 
 function toggleTechTree (newState) {
-  if (newState === undefined) newState = !screenSettings.openTechTree
-  screenSettings.openTechTree = newState
-  if (newState) changeCanvas('techTree')
-  else { changeCanvas('board') }
+  if (!preturn) {
+    // if (newState === undefined) newState = !screenSettings.openTechTree
+    // screenSettings.openTechTree = newState
+    if (screenSettings.currentCanvas === 'spaceView') changeCanvas('techTreeView')
+    else { changeCanvas('spaceView') }
+  }
 }
 
-function techTreeClick (event) {
-  if (event.offsetX > 720 && event.offsetY > 720) interactiveConsole()
-  const offset = new Vec(event.offsetX, event.offsetY)
-  const clickHex = Hex.getUnitHexFromXY((offset.add(screenSettings.techTreeOffset.invert())).scale(1 / 35))
-  onTechHexClicked(clickHex)
-  drawScreen()
-}
-
-function getBufferXYfromViewXY (pt) {
+function boardClick (event, view = views.spaceView) {
   const ss = screenSettings
-  return pt.subtract(ss.screenCenter).scale(ss.scale).add(ss.screenCenter).add(ss.viewOffset)
-}
-
-function boardClick (event) {
   const offset = new Vec(event.offsetX, event.offsetY)
+  const getHex = (o, v) => Hex.getUnitHexFromXY(getViewXYfromScreenXY(o, v).scale(1 / v.hexSize))
+  let menuItem = []
 
-  const bxy = getBufferXYfromViewXY(offset)
-  const uxy = bxy.scale(1 / screenSettings.hexSize)
-  const hex = Hex.getUnitHexFromXY(uxy)
+  const buttonPressed = data.floatingButtons.find((b) => {
+    const pos = b.dimensionMultiplier.add(Vec.unit).scaleByVec(ss.screenCenter).add(b.offset)
+    return offset.distance(pos) < b.size
+  })
 
-  console.log(offset, bxy, uxy, hex)
 
-  onHexClicked(hex)
+  if (sel.menu && sel.menu.length > 0 && ss.currentCanvas === 'spaceView') {
+    const ml = ss.thingMenuLocation
+    const posFunc = (i) => {
+      const hex = Hex.nToHex(i, Math.floor((ss.screenCenter.x - ml.offset.x / 2) / (ml.hexsize)), true)
+      return Hex.getXYfromUnitHex(hex, true).scale(ml.hexsize).add(ml.offset)// .add(ss.screenCenter.scaleXY(-1, -1))
+    }
+    
+    menuItem = sel.menu.map((v, i) => [v, i]).find((v, i) => offset.distance(posFunc(i)) < ml.hexsize)
+    
+    // const details = data.thingList.find(t => t.thing === v)
+    // if (details.sprite && details.sprite[0][0]) {
+    //   drawMenuItem(c, details, posFunc(i))
+    // } else (console.log('problem', details))
+  }
+
+  if (buttonPressed) {
+    buttonFunctions[buttonPressed.name]()
+  } else if (menuItem && menuItem[0] && ss.currentCanvas === 'spaceView') {
+    console.log(menuItem)
+    onTopPanelItemClicked(menuItem[0])
+  } else if (ss.currentCanvas === 'nextTurnView') {
+    console.log('nextTurnScreenClick')
+    if (!state.meta.online || debug || checkPlayerTurn()) {
+      translateViewTo(getXYfromHex(state.playerData[state.playerTurn].capital))
+      changeCanvas('spaceView')
+      preturn = false
+    }
+  } else if (ss.currentCanvas === 'spaceView') {
+    onSpaceHexClicked(getHex(offset, views.spaceView))
+  } else if (ss.currentCanvas === 'techTreeView') {
+    onTechHexClicked(getHex(offset, views.techTreeView))
+  } else if (ss.currentCanvas === 'menuView') {
+    onMenuHexClicked(getHex(offset, views.menuView))
+  }
+
   drawScreen()
-}
-
-function mainMenuClick (event) {
-  console.log('mainMenuClick')
-  const clickHex = Hex.getUnitHexFromXY((new Vec(event.offsetX, event.offsetY).add(screenSettings.techTreeOffset.invert())).scale(1 / 45))
-  onMenuHexClicked(clickHex)
-
-  drawScreen()
-}
-
-function loadGameMenuClick (event) {
-  console.log('loadGameMenuClick')
 }
 
 function checkPlayerTurn () {
@@ -149,27 +157,7 @@ function checkPlayerTurn () {
   return playerNum === state.playerTurn
 }
 
-function nextTurnScreenClick (event) {
-  console.log('nextTurnScreenClick')
-  if (!state.meta.online || debug || checkPlayerTurn()) {
-    translateViewTo(getXYfromHex(state.playerData[state.playerTurn].capital).subtract(screenSettings.screenCenter))
-    changeCanvas('board')
-    preturn = false
-  }
-  drawScreen()
-}
-
-function changeCanvas (canvas) {
-  document.body.querySelector('#board').style.display = 'none'
-  document.body.querySelector('#techTree').style.display = 'none'
-  document.body.querySelector('#mainMenu').style.display = 'none'
-  document.body.querySelector('#newGameMenu').style.display = 'none'
-  document.body.querySelector('#loadGameMenu').style.display = 'none'
-  document.body.querySelector('#nextTurnScreen').style.display = 'none'
-  if (canvas === 'board' && preturn) console.log('Ooops skipping nextTurnScreen')
-  document.body.querySelector(`#${canvas}`).style.display = 'block'
-  screenSettings.currentCanvas = canvas
-}
+function changeCanvas (canvas) { screenSettings.currentCanvas = canvas }
 
 function touchstart (event) {
   const { pageX, pageY } = event.touches[0]
@@ -184,36 +172,40 @@ function removeTouchmove (event) {
   document.getElementById('board').removeEventListener('touchend', removeTouchmove)
 }
 
-function touchdrag (event) {
-  sel = { state: 0, actions: { attacks: [], menu: [] }, moves: [] }
+function touchdrag (event, view = views.spaceView) {
+  // sel = { state: 0, actions: { attacks: [], menu: [] }, moves: [] }
+  event.preventDefault(); event.stopPropagation()
 
-  event.preventDefault()
-  event.stopPropagation()
-  var c = document.getElementById('board').getContext('2d')
-  const { pageX, pageY } = event.touches[0]
+  const t1 = new Vec(event.touches[0].pageX, event.touches[0].pageY)
   if (event.touches[1]) {
-    const { pageX: x2, pageY: y2 } = event.touches[1]
-    //  console.log(pageX , x2 , pageY , y2)
-    const fingerDistanceNew = Math.sqrt((pageX - x2) * (pageX - x2) + (pageY - y2) * (pageY - y2))
-    //  console.log(fingerDistanceNew + "fingerDistanceNew");
+    const t2 = new Vec(event.touches[1].pageX, event.touches[1].pageY)
+    const fingerDistanceNew = t1.distance(t2)
     if (fingerDistance) {
       scaleView(fingerDistance / fingerDistanceNew)
     }
     fingerDistance = fingerDistanceNew
   } else fingerDistance = null
-  //const dif = mouseDownLocation.scale(-1).add(new Vec(pageX, pageY)).scale(-1 / (screenSettings.scale))
-  const dif = mouseDownLocation.subtract(new Vec(pageX, pageY)).scale(screenSettings.scale)
-
-  translateView(dif)
-  mouseDownLocation = new Vec(pageX, pageY)
-  drawView()
+  translateView(mouseDownLocation.subtract(t1))
+  mouseDownLocation = t1
+  drawScreen(false)
 }
 
 function keyHandle (e) {
   if (e.code === 'Tab') interactiveConsole()
   if (Number(e.key)) interactiveConsole(Number(e.key))
-  if (e.key === 'ArrowRight') theta += 0.1
-  if (e.key === 'ArrowLeft') theta -= 0.1
+  // if (e.key === 'ArrowRight') theta += 0.1
+  // if (e.key === 'ArrowLeft') theta -= 0.1
+  drawScreen()
+}
 
+function resizeScreen (event) {
+  // console.log(window.innerHeight, window.innerWidth)
+  const roundedHalfMin = (a) => Math.max(Math.floor(a / 2), 200)
+  const center = new Vec(roundedHalfMin(window.innerWidth) - 3, roundedHalfMin(window.innerHeight) - 3)
+  const canvas = document.getElementById('board')
+  screenSettings.screenCenter = center
+  views.buttons.center = center
+  canvas.width = center.x * 2
+  canvas.height = center.y * 2
   drawScreen()
 }

@@ -53,7 +53,7 @@ function replaceState (newState) {
   state = newState
   if (state.meta.online) setlocalGameInfo() // localGameInfo = setlocalGameInfo();
   preturn = true
-  changeCanvas('nextTurnScreen')
+  changeCanvas('nextTurnView')
   drawScreen()
 }
 
@@ -82,7 +82,7 @@ function setupNew (config, meta = { online: false }) {
     baseArray.push({ type: 'planet', owner: i, hex: hexloc, territory: hexloc.secondNeighboursInclusive })
     playerData.push({ type: config.playerlist[i], money: 5, income: 1, tech: {}, capital: hexloc, viewMask: makeNewViewMask(tiles, 0) })
     shipArray.push(buildShip('scoutShip', i, hexloc, false))
-    console.log(shipArray)
+    //console.log(shipArray)
     tiles.set(hexloc.id, { hex: hexloc, terrain: 'planet', station: null, navBeacon: { owner: i } })
 
     const hexStar = hexloc.randomNeighbour

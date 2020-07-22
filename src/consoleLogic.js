@@ -51,7 +51,7 @@ function interactiveConsole (num = '') {
     if (saveLoad === '1') { loadNetworkGameConsole() } else if (saveLoad === '2') { saveToServer() }
   }
   if (ans === '4') {
-    const cheat = prompt('How do you want to cheat\n 1: Money\n 2: Tech\n 3: View and debug', '1')
+    const cheat = prompt('How do you want to cheat\n 1: Money\n 2: Tech\n 3: View and debug\n 4: All', '1')
     if (cheat === '1') {
       state.playerData[state.playerTurn].money = 99
     }
@@ -59,6 +59,11 @@ function interactiveConsole (num = '') {
       data.techs.forEach(t => { state.playerData[state.playerTurn].tech[t.tech] = true })
     }
     if (cheat === '3') { debug = !debug }
+    if (cheat === '4') {
+      debug = !debug
+      data.techs.forEach(t => { state.playerData[state.playerTurn].tech[t.tech] = true })
+      state.playerData[state.playerTurn].money = 999
+    }
   }
   if (ans === '5') { screenSettings.showTrails = !screenSettings.showTrails }
   if (ans === '6') { loginSignupConsole() }
