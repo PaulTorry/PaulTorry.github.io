@@ -158,6 +158,10 @@ function onMenuHexClicked (hex) {
         menuData.Screen = 'NewGame'
         console.log('menuData.Screen === NewGame')
         break
+      case 'Console':
+        interactiveConsole()
+        console.log('open console')
+        break
     }
   } else if (menuData.Screen === 'loadGameMenu') {
     const opt = data.loadGameMenu.find(t => t.hex.compare(hex))

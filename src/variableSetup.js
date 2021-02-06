@@ -15,7 +15,8 @@ const data = {
     { name: 'Quick Setup', colour: [50, 47, 73], hex: new Hex(-3, 0), sprite: [['titanShip', 0, -10, 1]] },
     { name: 'Login/Signup', colour: [50, 47, 73], hex: new Hex(0, -2), sprite: [['titanShip', 0, -10, 1]] },
     { name: 'Setup', colour: [50, 47, 73], hex: new Hex(-3, 2), sprite: [['titanShip', 0, -10, 1]] },
-    { name: 'Load', colour: [50, 47, 73], hex: new Hex(0, 0), sprite: [['titanShip', 0, -10, 1]] }
+    { name: 'Load', colour: [50, 47, 73], hex: new Hex(0, 0), sprite: [['titanShip', 0, -10, 1]] },
+    { name: 'Console', colour: [50, 47, 73], hex: new Hex(4, -4), sprite: [['titanShip', 0, -10, 1]] }
 
   ],
 

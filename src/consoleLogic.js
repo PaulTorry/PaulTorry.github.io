@@ -269,11 +269,15 @@ function saveAs (savename = 'quicksave') {
   localStorage.setItem('#savenames', JSON.stringify(savenames))
 }
 
-function load (savename = 'quicksave') {
+function load (savename = 'quicksave', newgameIfFail = false) {
   if (savename === 'a') { savename = 'autoSave'; console.log('auto') }
   if (savename === 'clear') { localStorage.setItem('#savenames', JSON.stringify([])) } else {
     const newState = JSON.parse(localStorage.getItem(savename))
-    console.log(newState)
-    replaceState(unpackState(newState))
+    console.log('newState:', newState)
+    if (newState) replaceState(unpackState(newState))
+    else {
+      if (newgameIfFail) replaceState(setup(5, 9, 2, false, 'default', generateID(20)))
+      else console.log('LOAD NEWSTATE NOT FOUND')
+    }
   }
 }

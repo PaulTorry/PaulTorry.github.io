@@ -69,7 +69,9 @@ window.onload = () => {
   firebase.initializeApp(firebaseConfig);
   firebase.auth().onAuthStateChanged(authStateChangeHandler);
   
-  replaceState( setup(5, 9, 2, false, "default", generateID(20)))
+  load("a", true)
+
+ // replaceState( setup(5, 9, 2, false, "default", generateID(20)))
   window.onresize = resizeScreen
   document.body.querySelector("#board").requestFullscreen()
   resizeScreen()
