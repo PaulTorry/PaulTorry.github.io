@@ -139,7 +139,7 @@ function onMenuHexClicked (hex) {
 
   if (menuData.Screen === 'MainMenu') {
     const opt = data.mainMenu.find(t => t.hex.compare(hex))
-    const action = opt.name
+    const action = opt ? opt.name : null
     console.log(opt)
 
     switch (action) {

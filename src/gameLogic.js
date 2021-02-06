@@ -233,7 +233,7 @@ function getWeaponPower (ship, attacking = true) {
 function repair (ship) {
   const hex = ship.hex
   const tState = territoryState(hex)
-  console.log('repair ship', hex, territoryState(hex))
+  // console.log('repair ship', hex, territoryState(hex))
   if (tState > 1) {
     if (state.baseArray.find(b => b.hex.compare(hex))) ship.hull = Math.min(ship.hull + 2, data.shipHulls[ship.type].hull)
 

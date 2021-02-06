@@ -107,6 +107,12 @@ function saveToServer () { // Check order (make async await?)
     .set({ currentGame: packState() })
   //  .then(function(docRef) {console.log("State  with ID: ")})
     .catch(function (error) { console.error('Error adding STate: ', error) })
+
+  // let user
+ 
+  //   firebase.firestore().collection('gamestest').doc(state.gameID).collection('usercol').doc(user)
+  //   .set({ player: true }).catch(function (error) { console.error('Error adding usercol: ', error) })
+
 }
 
 function checkForUpdatedServerGame (gameID = state.gameID) {
@@ -169,7 +175,7 @@ function handleSignIn (email, password) {
   console.log('signing in')
   firebase.auth().signInWithEmailAndPassword(email, password)
     .catch(function (error) { alert(error.message); console.log(error) })
-    .on()
+    // .on()
 }
 
 function handleSignUp (email, password, handle) {

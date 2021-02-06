@@ -26,18 +26,16 @@ function getPlayerColour (player = state.playerTurn, opacity = 1, mid = false, d
   return `rgba(${r},${g},${b},${opacity})`
 }
 
-function mapColours (string, player, transparency = 1) {
-  if (string === 'rgb(130, 6, 20)') return getPlayerColour(player, transparency, 1) // MAYBE 0,1)
-  else if (string === 'rgb(158, 28, 35)') return getPlayerColour(player, transparency, 1)
-  else if (string === 'rgb(215, 35, 53)') return getPlayerColour(player, transparency)
-  else if (string === 'rgba(215, 35, 53, 0.00)') return getPlayerColour(player, 0)
-  else return string
-}
-
 // let colour = (x) => { return (y) => `rgb(${x[0]},${x[1]},${x[2]})` }
 
 function getColMap (player, transparency = 1) {
-  return (v) => mapColours(v, player, transparency)
+  return (string) => {
+    if (string === 'rgb(130, 6, 20)') return getPlayerColour(player, transparency, 1) // MAYBE 0,1)
+    else if (string === 'rgb(158, 28, 35)') return getPlayerColour(player, transparency, 1)
+    else if (string === 'rgb(215, 35, 53)') return getPlayerColour(player, transparency)
+    else if (string === 'rgba(215, 35, 53, 0.00)') return getPlayerColour(player, 0)
+    else return string
+  }
 }
 
 const selectedColour = ['white', 'purple', 'blue', 'orange']
@@ -51,11 +49,11 @@ function drawScreen (fullUpdate = true) {
   screen.clearRect(-99999, -99999, 199999, 199999)
 
   if (views[c]) {
-    if (fullUpdate) drawBuffer(views[c], drawFunctions[c]);
+    if (fullUpdate) drawBuffer(views[c], drawFunctions[c])
     drawViewfromBuffer(views[c])
   } else console.log('drawfail')
 
-  if (fullUpdate) drawBuffer(views.buttons, drawFloatingButtons);
+  if (fullUpdate) drawBuffer(views.buttons, drawFloatingButtons)
   drawViewfromBuffer(views.buttons)
 }
 
@@ -196,7 +194,7 @@ function drawBoard (v) {
       if (gameSprites[ship.type]) {
         const { x, y } = getXYfromHex(ship.hex)
         let transparency = 1
-        if (ship.owner === state.playerTurn && (ship.moved && ship.attacked)) { transparency = 0.4 }
+        if (ship.owner !== state.playerTurn || (ship.moved && ship.attacked)) { transparency = 0.4 }
         drawFromData(c, ship.type, x, y, getColMap(ship.owner, transparency))
       }
 
@@ -248,7 +246,7 @@ function drawFloatingButtons (v) {
     const pos = b.dimensionMultiplier.scaleByVec(v.center).add(b.offset)
     drawFromData(c, b.sprite, ...pos, getColMap(state.playerTurn, 1), b.size / 100, 0, true)
   })
-  console.log(v.center.scaleXY(1, 1))
+  // console.log(v.center.scaleXY(1, 1))
 
   // thing menu
 
@@ -285,28 +283,6 @@ function drawFloatingButtons (v) {
   drawText(c, `Game: ${state.gameName}`, x + 20, y + 40, 15, 'white')
   if (loggedInPlayer) drawText(c, `Logged in Player: ${loggedInPlayer.handle}`, x + 20, y + 60, 15, 'white')
 }
-
-// function drawTopPanel () {
-//   const ss = screenSettings
-//   const c = document.getElementById('topPanel').getContext('2d')
-//   document.getElementById('topPanel').style.borderColor = getPlayerColour(state.playerTurn)
-//   document.getElementById('topPanel').height = 100
-//   c.clearRect(-99999, -99999, 199999, 199999)
-//   c.strokeStyle = 'white'
-
-//   if (sel.menu && sel.menu.length > 0 && screenSettings.currentCanvas === 'spaceView') {
-//     const posFunc = (i) => {
-//       const hex = Hex.nToHex(i, Math.floor((screenSettings.screenCenter.x * 2 - 200) / 70), true)
-//       return Hex.getXYfromUnitHex(hex, true).scale(35).addXY(150, 90)
-//     }
-//     sel.menu.forEach((v, i) => {
-//       const details = data.thingList.find(t => t.thing === v)
-//       if (details.sprite && details.sprite[0][0]) {
-//         drawMenuItem(c, details, posFunc(i))
-//       } else (console.log('problem', details))
-//     })
-//   }
-// }
 
 function drawMenuItem (c, details, pos) {
   drawFromData(c, 'roundedHex', ...pos, getColMap(state.playerTurn, 1), 0.35, 1 / 12)

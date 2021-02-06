@@ -49,7 +49,7 @@ function setup (numPlayersP, boardSizeP = 8, numHumansP = numPlayersP, playersTo
 // }
 
 function replaceState (newState) {
-  console.log('replaceState', newState)
+  // console.log('replaceState', newState)
   state = newState
   if (state.meta.online) setlocalGameInfo() // localGameInfo = setlocalGameInfo();
   preturn = true
@@ -60,7 +60,7 @@ function replaceState (newState) {
 function setupNew (config, meta = { online: false }) {
   // playerlist = makePlayerListConsole(config), alliesGrid = makeAlliesGridConsole(config, playerlist )){
   const gameID = generateID(20)
-  console.log(config)
+  // console.log(config)
   if (gameID.length < 15) console.log('check game id length')
   const tiles = new Map()
   const playerData = []
@@ -82,7 +82,7 @@ function setupNew (config, meta = { online: false }) {
     baseArray.push({ type: 'planet', owner: i, hex: hexloc, territory: hexloc.secondNeighboursInclusive })
     playerData.push({ type: config.playerlist[i], money: 5, income: 1, tech: {}, capital: hexloc, viewMask: makeNewViewMask(tiles, 0) })
     shipArray.push(buildShip('scoutShip', i, hexloc, false))
-    //console.log(shipArray)
+    // console.log(shipArray)
     tiles.set(hexloc.id, { hex: hexloc, terrain: 'planet', station: null, navBeacon: { owner: i } })
 
     const hexStar = hexloc.randomNeighbour

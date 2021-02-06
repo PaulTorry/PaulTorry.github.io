@@ -60,7 +60,7 @@ function drag (e, view = views.spaceView) {
   const dif = mouseDownLocation.subtract(offset)
   if (mouseDownLocationABS.subtract(offset).mag > 20) {
     sel = { state: 0, actions: { attacks: [], menu: [] }, moves: [] }
-    drawScreen()
+    //drawScreen()
   }
   e.preventDefault(); e.stopPropagation()
   translateView(dif)

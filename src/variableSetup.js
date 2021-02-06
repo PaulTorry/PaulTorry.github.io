@@ -3,8 +3,6 @@
 /* global Hex, Vec,       */
 /* eslint-disable no-unused-vars */
 
-console.log(Vec.zero)
-
 const data = {
 
   floatingButtons: [
@@ -130,7 +128,7 @@ const data = {
     { name: 'Basic Frigate', thing: 'basicFrigate', type: 'ship', price: 2, territoryState: 2, inhabitedPlanet: true, shipState: 'noShip', terrain: [], sprite: [['basicFrigate', 0, 0, 1]] },
     { name: 'Fast Frigate', thing: 'fastFrigate', type: 'ship', price: 3, territoryState: 2, inhabitedPlanet: true, shipState: 'noShip', tech: 'fastFrigateTech', terrain: [], sprite: [['fastFrigate', 0, 0, 1]] },
     { name: '  Battleship', thing: 'battleship', type: 'ship', price: 5, territoryState: 2, inhabitedPlanet: true, shipState: 'noShip', tech: 'battleshipTech', terrain: [], sprite: [['battleship', 0, 0, 1]] },
-    { name: ' Arm. Dest.', thing: 'armouredDestroyer', type: 'ship', price: 3, territoryState: 2, inhabitedPlanet: true, shipState: 'noShip', tech: 'armouredDestroyerTech', terrain: [], sprite: [['scoutShip', 0, 0, 1]] },
+    { name: ' Arm. Dest.', thing: 'armouredDestroyer', type: 'ship', price: 3, territoryState: 2, inhabitedPlanet: true, shipState: 'noShip', tech: 'armouredDestroyerTech', terrain: [], sprite: [['armouredDestroyer', 0, 0, 1]] },
     // {name: 'Devourer', thing: 'devourer', type:"ship", price: 8, territoryState: 2, inhabitedPlanet: true, shipState: 'noShip',  tech: 'devourerTech', terrain: [], sprite:[['devourer',0,0,1]] } ,
     { name: ' Missile Frig.', thing: 'missileFrigate', type: 'ship', price: 3, territoryState: 2, inhabitedPlanet: true, shipState: 'noShip', tech: 'missileFrigateTech', terrain: [], sprite: [['missileFrigate', 0, 0, 1]] },
     { name: 'Missile Dest.', thing: 'missileDestroyer', type: 'ship', price: 8, territoryState: 2, inhabitedPlanet: true, shipState: 'noShip', tech: 'missileDestroyerTech', terrain: [], sprite: [['missileDestroyer', 0, 0, 1.3]] },
